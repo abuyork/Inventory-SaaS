@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Filter, ArrowUpDown } from 'lucide-react';
 import { Product } from '../../types';
 import { useInventory } from '../../hooks/useInventory';
@@ -40,7 +40,6 @@ export default function InventoryList() {
     editProduct,
     sortProducts,
     sortField,
-    sortDirection,
     filterCategory,
     setFilterCategory
   } = useInventory(initialProducts);

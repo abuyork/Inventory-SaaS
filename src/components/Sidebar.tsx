@@ -1,4 +1,3 @@
-import React from 'react';
 import { LayoutDashboard, Clipboard, BarChart2, Bell, Settings } from 'lucide-react';
 
 interface Props {
