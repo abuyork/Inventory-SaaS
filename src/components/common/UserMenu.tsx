@@ -40,14 +40,11 @@ export default function UserMenu() {
 
       {showDropdown && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50">
-          <a 
-            href="/settings" 
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            Settings
-          </a>
           <button 
-            onClick={signOut}
+            onClick={() => {
+              signOut();
+              setShowDropdown(false);
+            }}
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
             <div className="flex items-center gap-2">

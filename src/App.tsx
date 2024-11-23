@@ -16,8 +16,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <Sidebar />
-      <div className="ml-64">
-        <main className="pt-16">
+      <div className="ml-64 pt-16">
+        <main>
           {children}
         </main>
       </div>

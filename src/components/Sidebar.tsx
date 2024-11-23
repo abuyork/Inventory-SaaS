@@ -17,8 +17,11 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 pt-16">
-      <nav className="p-4">
+    <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200">
+      <div className="p-6 mb-4">
+        <h1 className="text-xl font-semibold text-gray-900">StockSense</h1>
+      </div>
+      <nav className="px-4">
         {navItems.map(({ path, icon: Icon, label }) => (
           <NavLink
             key={path}
