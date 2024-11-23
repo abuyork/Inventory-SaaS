@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /products/{productId} {
+      // Basic user validation
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      
+      // Verify user owns the document
+      function isOwner() {
+        return isSignedIn() && request.auth.uid == resource.data.userId;
+      }
+      
+      // Validate product data
+      function isValidProduct() {
+        let incoming = request.resource.data;
+        return incoming.name is string &&
+               incoming.name.size() > 0 &&
+               incoming.quantity >= 0 &&
+               incoming.parLevel >= 0 &&
+               incoming.reorderPoint >= 0 &&
+               incoming.userId == request.auth.uid;
+      }
+
+      allow read: if isSignedIn() && 
+                    (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && isValidProduct();
+      allow update: if isOwner() && isValidProduct();
+      allow delete: if isOwner();
+    }
+    
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+} 

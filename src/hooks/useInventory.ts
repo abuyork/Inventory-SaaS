@@ -8,46 +8,76 @@ import {
   onSnapshot,
   query,
   orderBy,
-  Timestamp
-} from 'firebase/firestore';
+  Timestamp,
+  where} from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Product } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
-export function useInventory(_initialProducts: Product[]) {
+export function useInventory() {
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [sortField, setSortField] = useState<keyof Product>('name');
   const [filterCategory, setFilterCategory] = useState('all');
   const [loading, setLoading] = useState(true);
 
+  // Set up real-time listener
   useEffect(() => {
-    // Subscribe to products collection
-    const q = query(collection(db, 'products'), orderBy('name'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const productsData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          ...data,
-          id: doc.id,
-          lastUpdated: data.lastUpdated.toDate(),
-          expirationDate: data.expirationDate ? data.expirationDate.toDate() : undefined
-        } as Product;
-      });
-      setProducts(productsData);
+    if (!user) {
+      setProducts([]);
       setLoading(false);
-    });
+      return;
+    }
+
+    // Create query with user filter
+    const productsRef = collection(db, 'products');
+    const q = query(
+      productsRef,
+      where('userId', '==', user.uid),
+      orderBy('lastUpdated', 'desc')  // Changed to sort by lastUpdated
+    );
+
+    // Set up real-time listener
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const productsData = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            ...data,
+            id: doc.id,
+            lastUpdated: data.lastUpdated.toDate(),
+            expirationDate: data.expirationDate ? data.expirationDate.toDate() : undefined
+          } as Product;
+        });
+        setProducts(productsData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching products:", error);
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
-  const addProduct = async (product: Omit<Product, 'id' | 'lastUpdated'>) => {
+  const addProduct = async (product: Omit<Product, 'id' | 'lastUpdated' | 'userId'>) => {
+    if (!user) return;
+    
     try {
-      await addDoc(collection(db, 'products'), {
+      const newProduct = {
         ...product,
+        userId: user.uid,
         lastUpdated: Timestamp.now(),
         expirationDate: product.expirationDate ? Timestamp.fromDate(new Date(product.expirationDate)) : null
-      });
+      };
+
+      // Just add to Firestore and let the real-time listener handle the state update
+      await addDoc(collection(db, 'products'), newProduct);
+      
     } catch (error) {
       console.error('Error adding product:', error);
+      // You might want to show an error message to the user here
     }
   };
 

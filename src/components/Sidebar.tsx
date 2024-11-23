@@ -1,38 +1,41 @@
-import { LayoutDashboard, Clipboard, BarChart2, Bell, Settings } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Package, 
+  BarChart2, 
+  Bell, 
+  Settings 
+} from 'lucide-react';
 
-interface Props {
-  onNavigate: (view: string) => void;
-  currentView: string;
-}
-
-export default function Sidebar({ onNavigate, currentView }: Props) {
-  const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', value: 'dashboard' },
-    { icon: Clipboard, label: 'Inventory', value: 'inventory' },
-    { icon: BarChart2, label: 'Analytics', value: 'analytics' },
-    { icon: Bell, label: 'Alerts', value: 'alerts' },
-    { icon: Settings, label: 'Settings', value: 'settings' }
+export default function Sidebar() {
+  const navItems = [
+    { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/inventory', icon: Package, label: 'Inventory' },
+    { path: '/analytics', icon: BarChart2, label: 'Analytics' },
+    { path: '/alerts', icon: Bell, label: 'Alerts' },
+    { path: '/settings', icon: Settings, label: 'Settings' }
   ];
 
   return (
-    <div className="w-64 bg-white h-screen shadow-lg fixed left-0 top-0">
-      <div className="p-6">
-        <h1 className="text-2xl font-bold text-gray-800">StockSense</h1>
-      </div>
-      <nav className="mt-6">
-        {menuItems.map((item) => (
-          <button
-            key={item.value}
-            onClick={() => onNavigate(item.value)}
-            className={`w-full flex items-center px-6 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors ${
-              currentView === item.value ? 'bg-blue-50 text-blue-600' : ''
-            }`}
+    <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 pt-16">
+      <nav className="p-4">
+        {navItems.map(({ path, icon: Icon, label }) => (
+          <NavLink
+            key={path}
+            to={path}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-2 rounded-lg mb-1 ${
+                isActive
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`
+            }
           >
-            <item.icon className="w-5 h-5 mr-3" />
-            <span className="font-medium">{item.label}</span>
-          </button>
+            <Icon className="w-5 h-5" />
+            {label}
+          </NavLink>
         ))}
       </nav>
-    </div>
+    </aside>
   );
 }

@@ -1,34 +1,8 @@
 import { useState } from 'react';
 import { Plus, Filter, ArrowUpDown } from 'lucide-react';
-import { Product } from '../../types';
 import { useInventory } from '../../hooks/useInventory';
 import InventoryItem from './InventoryItem';
 import AddInventoryModal from './AddInventoryModal';
-
-const initialProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Tomatoes',
-    category: 'Produce',
-    quantity: 45.5,
-    unit: 'kg',
-    parLevel: 50,
-    reorderPoint: 20,
-    lastUpdated: new Date(),
-    expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-  },
-  {
-    id: '2',
-    name: 'Chicken Breast',
-    category: 'Meat',
-    quantity: 25,
-    unit: 'kg',
-    parLevel: 30,
-    reorderPoint: 15,
-    lastUpdated: new Date(),
-    expirationDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-  }
-];
 
 export default function InventoryList() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -43,7 +17,7 @@ export default function InventoryList() {
     filterCategory,
     setFilterCategory,
     loading
-  } = useInventory(initialProducts);
+  } = useInventory();
 
   const categories = ['all', 'Produce', 'Meat', 'Dairy', 'Dry Goods'];
 
