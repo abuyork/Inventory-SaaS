@@ -41,7 +41,8 @@ export default function InventoryList() {
     sortProducts,
     sortField,
     filterCategory,
-    setFilterCategory
+    setFilterCategory,
+    loading
   } = useInventory(initialProducts);
 
   const categories = ['all', 'Produce', 'Meat', 'Dairy', 'Dry Goods'];
@@ -137,14 +138,24 @@ export default function InventoryList() {
           <div>Status</div>
           <div>Actions</div>
         </div>
-        {processedProducts.map(product => (
-          <InventoryItem 
-            key={product.id} 
-            product={product}
-            onDelete={deleteProduct}
-            onEdit={editProduct}
-          />
-        ))}
+        {loading ? (
+          <div className="p-4 text-center text-gray-500">
+            Loading inventory...
+          </div>
+        ) : products.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">
+            No items in inventory
+          </div>
+        ) : (
+          products.map(product => (
+            <InventoryItem 
+              key={product.id} 
+              product={product}
+              onDelete={deleteProduct}
+              onEdit={editProduct}
+            />
+          ))
+        )}
       </div>
 
       {showAddModal && (
