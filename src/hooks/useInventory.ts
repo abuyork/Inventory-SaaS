@@ -1,20 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Product } from '../types';
 
 export function useInventory(initialProducts: Product[]) {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>(() => {
+    const savedProducts = localStorage.getItem('inventoryProducts');
+    return savedProducts ? JSON.parse(savedProducts) : initialProducts;
+  });
+  
   const [sortField, setSortField] = useState<keyof Product>('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterCategory, setFilterCategory] = useState('all');
+
+  useEffect(() => {
+    localStorage.setItem('inventoryProducts', JSON.stringify(products));
+  }, [products]);
 
   const addProduct = (product: Omit<Product, 'id' | 'lastUpdated'>) => {
     const newProduct: Product = {
       ...product,
-      id: Math.random().toString(36).substr(2, 9),
-      lastUpdated: new Date(),
-      quantity: Number(product.quantity),
-      parLevel: Number(product.parLevel),
-      reorderPoint: Number(product.reorderPoint)
+      id: crypto.randomUUID(),
+      lastUpdated: new Date()
     };
     setProducts(prev => [...prev, newProduct]);
   };
@@ -23,49 +27,32 @@ export function useInventory(initialProducts: Product[]) {
     setProducts(prev => prev.filter(product => product.id !== id));
   };
 
-  const editProduct = (id: string, updatedProduct: Partial<Product>) => {
+  const editProduct = (id: string, updates: Partial<Product>) => {
     setProducts(prev => prev.map(product => 
       product.id === id 
-        ? { 
-            ...product, 
-            ...updatedProduct,
-            lastUpdated: new Date() 
-          }
+        ? { ...product, ...updates, lastUpdated: new Date() }
         : product
     ));
   };
 
   const sortProducts = (field: keyof Product) => {
     setSortField(field);
-    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    setProducts(prev => [...prev].sort((a, b) => {
+      if (a[field] < b[field]) return -1;
+      if (a[field] > b[field]) return 1;
+      return 0;
+    }));
   };
 
-  const filteredAndSortedProducts = products
-    .filter(product => filterCategory === 'all' || product.category === filterCategory)
-    .sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
-
-      // Handle undefined values
-      if (aValue === undefined && bValue === undefined) return 0;
-      if (aValue === undefined) return 1;
-      if (bValue === undefined) return -1;
-
-      // Compare values based on sort direction
-      if (sortDirection === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      }
-      return bValue < aValue ? -1 : bValue > aValue ? 1 : 0;
-    });
-
   return {
-    products: filteredAndSortedProducts,
+    products: filterCategory === 'all' 
+      ? products 
+      : products.filter(p => p.category === filterCategory),
     addProduct,
     deleteProduct,
     editProduct,
     sortProducts,
     sortField,
-    sortDirection,
     filterCategory,
     setFilterCategory
   };

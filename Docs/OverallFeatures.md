@@ -26,7 +26,6 @@
      - Export Data
      - Backup Settings
      - Change Password
-     - Two-Factor Authentication
 
 4. **Header**
    - Search functionality not implemented
@@ -116,7 +115,6 @@
 - Add API security
 - Add data encryption
 - Implement session management
-- Add 2FA support
 
 #### Testing
 - Add unit tests

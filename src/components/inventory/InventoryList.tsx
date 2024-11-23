@@ -46,6 +46,12 @@ export default function InventoryList() {
 
   const categories = ['all', 'Produce', 'Meat', 'Dairy', 'Dry Goods'];
 
+  const processedProducts = products.map(product => ({
+    ...product,
+    lastUpdated: new Date(product.lastUpdated),
+    expirationDate: product.expirationDate ? new Date(product.expirationDate) : undefined
+  }));
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -131,7 +137,7 @@ export default function InventoryList() {
           <div>Status</div>
           <div>Actions</div>
         </div>
-        {products.map(product => (
+        {processedProducts.map(product => (
           <InventoryItem 
             key={product.id} 
             product={product}
