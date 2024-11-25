@@ -2,12 +2,10 @@ import { useState, useEffect } from 'react';
 import { 
   collection, 
   addDoc, 
-  deleteDoc, 
   updateDoc, 
   doc, 
   onSnapshot,
   query,
-  orderBy,
   Timestamp,
   where,
   writeBatch} from 'firebase/firestore';

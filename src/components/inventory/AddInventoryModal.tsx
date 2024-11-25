@@ -25,7 +25,9 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
       quantity: Number(formData.quantity),
       parLevel: Number(formData.parLevel),
       reorderPoint: Number(formData.reorderPoint),
-      expirationDate: formData.expirationDate ? new Date(formData.expirationDate) : undefined
+      expirationDate: formData.expirationDate ? new Date(formData.expirationDate) : undefined,
+      userId: 'current-user',
+      archived: false
     });
     onClose();
   };
