@@ -1,16 +1,23 @@
 import { useState } from 'react';
-import { MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import { 
+  PenSquare,
+  Trash,
+  AlertCircle
+} from 'lucide-react';
 import { Product } from '../../types';
 import { format } from 'date-fns';
 import EditInventoryModal from './EditInventoryModal';
+import { Checkbox } from '../ui/Checkbox';
 
 interface Props {
   product: Product;
   onDelete: (id: string) => void;
   onEdit: (id: string, product: Partial<Product>) => void;
+  selected: boolean;
+  onSelect: (id: string) => void;
 }
 
-export default function InventoryItem({ product, onDelete, onEdit }: Props) {
+export default function InventoryItem({ product, onDelete, onEdit, selected, onSelect }: Props) {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -26,8 +33,15 @@ export default function InventoryItem({ product, onDelete, onEdit }: Props) {
     return 'In Stock';
   };
 
+  const getStatusIcon = (quantity: number, reorderPoint: number, parLevel: number) => {
+    if (quantity <= reorderPoint) return <AlertCircle className="w-4 h-4 text-red-500" />;
+    if (quantity < parLevel) return <AlertCircle className="w-4 h-4 text-yellow-500" />;
+    return null;
+  };
+
   const statusColor = getStatusColor(product.quantity, product.reorderPoint, product.parLevel);
   const statusText = getStatusText(product.quantity, product.reorderPoint, product.parLevel);
+  const statusIcon = getStatusIcon(product.quantity, product.reorderPoint, product.parLevel);
 
   const handleDelete = () => {
     setShowConfirmDelete(true);
@@ -40,9 +54,18 @@ export default function InventoryItem({ product, onDelete, onEdit }: Props) {
 
   return (
     <>
-      <div className="grid grid-cols-7 gap-4 p-4 border-b border-gray-200 items-center hover:bg-gray-50">
+      <div className="grid grid-cols-8 gap-4 p-4 border-b border-gray-200 items-center hover:bg-gray-50">
+        <div>
+          <Checkbox
+            checked={selected}
+            onCheckedChange={() => onSelect(product.id)}
+          />
+        </div>
         <div className="col-span-2">
-          <p className="font-medium text-gray-800">{product.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-medium text-gray-800">{product.name}</p>
+            {statusIcon}
+          </div>
           <p className="text-sm text-gray-500">
             Updated {format(product.lastUpdated, 'MMM d, yyyy')}
           </p>
@@ -61,19 +84,18 @@ export default function InventoryItem({ product, onDelete, onEdit }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <button 
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-2 hover:bg-blue-50 rounded-full transition-colors"
             onClick={() => setShowEditModal(true)}
+            title="Edit item"
           >
-            <Edit2 className="w-4 h-4 text-gray-600" />
+            <PenSquare className="w-4 h-4 text-blue-600" />
           </button>
           <button 
             onClick={handleDelete}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-2 hover:bg-red-50 rounded-full transition-colors"
+            title="Delete item"
           >
-            <Trash2 className="w-4 h-4 text-gray-600" />
-          </button>
-          <button className="p-1 hover:bg-gray-100 rounded">
-            <MoreVertical className="w-4 h-4 text-gray-600" />
+            <Trash className="w-4 h-4 text-red-600" />
           </button>
         </div>
       </div>
@@ -89,7 +111,12 @@ export default function InventoryItem({ product, onDelete, onEdit }: Props) {
       {showConfirmDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h3 className="text-lg font-bold mb-4">Confirm Delete</h3>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-red-100 rounded-full">
+                <Trash className="w-5 h-5 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold">Confirm Delete</h3>
+            </div>
             <p className="text-gray-600 mb-6">
               Are you sure you want to delete {product.name}? This action cannot be undone.
             </p>

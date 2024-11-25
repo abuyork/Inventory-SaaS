@@ -3,10 +3,15 @@ import { Plus, Filter, ArrowUpDown } from 'lucide-react';
 import { useInventory } from '../../hooks/useInventory';
 import InventoryItem from './InventoryItem';
 import AddInventoryModal from './AddInventoryModal';
+import BulkActionsBar from './BulkActionsBar';
+import { Product } from '../../types';
+import { format } from 'date-fns';
+import { Checkbox } from '../ui/Checkbox';
 
 export default function InventoryList() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const {
     products,
     addProduct,
@@ -21,11 +26,34 @@ export default function InventoryList() {
 
   const categories = ['all', 'Produce', 'Meat', 'Dairy', 'Dry Goods'];
 
-  const processedProducts = products.map(product => ({
-    ...product,
-    lastUpdated: new Date(product.lastUpdated),
-    expirationDate: product.expirationDate ? new Date(product.expirationDate) : undefined
-  }));
+  const handleSelect = (id: string) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItems.size === products.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(products.map(p => p.id)));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    selectedItems.forEach(id => deleteProduct(id));
+    setSelectedItems(new Set());
+  };
+
+  const handleExport = () => {
+    const selectedProducts = products.filter(p => selectedItems.has(p.id));
+    const csv = convertToCSV(selectedProducts);
+    downloadCSV(csv, 'inventory-export.csv');
+  };
 
   return (
     <div className="p-6">
@@ -80,7 +108,13 @@ export default function InventoryList() {
       )}
 
       <div className="bg-white rounded-lg shadow">
-        <div className="grid grid-cols-7 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-medium">
+        <div className="grid grid-cols-8 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-medium">
+          <div>
+            <Checkbox
+              checked={selectedItems.size === products.length}
+              onCheckedChange={handleSelectAll}
+            />
+          </div>
           <div 
             className="col-span-2 cursor-pointer flex items-center gap-2"
             onClick={() => sortProducts('name')}
@@ -127,10 +161,19 @@ export default function InventoryList() {
               product={product}
               onDelete={deleteProduct}
               onEdit={editProduct}
+              selected={selectedItems.has(product.id)}
+              onSelect={handleSelect}
             />
           ))
         )}
       </div>
+
+      <BulkActionsBar
+        selectedCount={selectedItems.size}
+        onDelete={handleBulkDelete}
+        onExport={handleExport}
+        onArchive={() => {/* Implement archive logic */}}
+      />
 
       {showAddModal && (
         <AddInventoryModal 
@@ -140,4 +183,26 @@ export default function InventoryList() {
       )}
     </div>
   );
+}
+
+function convertToCSV(products: Product[]): string {
+  const headers = ['Name', 'Category', 'Quantity', 'Unit', 'Par Level', 'Reorder Point', 'Last Updated'];
+  const rows = products.map(p => [
+    p.name,
+    p.category,
+    p.quantity,
+    p.unit,
+    p.parLevel,
+    p.reorderPoint,
+    format(p.lastUpdated, 'yyyy-MM-dd')
+  ]);
+  return [headers, ...rows].map(row => row.join(',')).join('\n');
+}
+
+function downloadCSV(csv: string, filename: string) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
 }
