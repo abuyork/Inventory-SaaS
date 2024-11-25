@@ -178,14 +178,16 @@ export default function InventoryList() {
 
       <div className="bg-white rounded-lg shadow">
         <div className="grid grid-cols-8 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-medium">
-          <div>
-            <Checkbox
-              checked={selectedItems.size === products.length}
-              onCheckedChange={handleSelectAll}
-            />
-          </div>
+          {products.length > 0 && (
+            <div>
+              <Checkbox
+                checked={selectedItems.size === products.length}
+                onCheckedChange={handleSelectAll}
+              />
+            </div>
+          )}
           <div 
-            className="col-span-2 cursor-pointer flex items-center gap-2"
+            className={`${products.length > 0 ? 'col-span-2' : 'col-span-3'} cursor-pointer flex items-center gap-2`}
             onClick={() => sortProducts('name')}
           >
             Item
