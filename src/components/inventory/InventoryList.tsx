@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Filter, ArrowUpDown } from 'lucide-react';
+import { Plus, Filter, ArrowUpDown, Archive, ArchiveRestore } from 'lucide-react';
 import { useInventory } from '../../hooks/useInventory';
 import InventoryItem from './InventoryItem';
 import AddInventoryModal from './AddInventoryModal';
@@ -7,11 +7,14 @@ import BulkActionsBar from './BulkActionsBar';
 import { Product } from '../../types';
 import { format } from 'date-fns';
 import { Checkbox } from '../ui/Checkbox';
+import toast from 'react-hot-toast';
 
 export default function InventoryList() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const [archiveOperationLoading, setArchiveOperationLoading] = useState(false);
   const {
     products,
     addProduct,
@@ -21,7 +24,11 @@ export default function InventoryList() {
     sortField,
     filterCategory,
     setFilterCategory,
-    loading
+    loading,
+    archiveProducts,
+    unarchiveProducts,
+    showArchived,
+    setShowArchived
   } = useInventory();
 
   const categories = ['all', 'Produce', 'Meat', 'Dairy', 'Dry Goods'];
@@ -47,6 +54,40 @@ export default function InventoryList() {
   const handleBulkDelete = () => {
     selectedItems.forEach(id => deleteProduct(id));
     setSelectedItems(new Set());
+  };
+
+  const handleBulkArchive = async () => {
+    try {
+      setError(null);
+      setArchiveOperationLoading(true);
+      await archiveProducts(Array.from(selectedItems));
+      
+      toast.success(`${selectedItems.size} items archived successfully`);
+      setSelectedItems(new Set());
+    } catch (error) {
+      setError('Failed to archive items. Please try again.');
+      console.error('Archive error:', error);
+      toast.error("Failed to archive items. Please try again.");
+    } finally {
+      setArchiveOperationLoading(false);
+    }
+  };
+
+  const handleBulkUnarchive = async () => {
+    try {
+      setError(null);
+      setArchiveOperationLoading(true);
+      await unarchiveProducts(Array.from(selectedItems));
+      
+      toast.success(`${selectedItems.size} items restored successfully`);
+      setSelectedItems(new Set());
+    } catch (error) {
+      setError('Failed to restore items. Please try again.');
+      console.error('Unarchive error:', error);
+      toast.error("Failed to restore items. Please try again.");
+    } finally {
+      setArchiveOperationLoading(false);
+    }
   };
 
   const handleExport = () => {
@@ -102,6 +143,34 @@ export default function InventoryList() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                View Archived Items
+              </label>
+              <button
+                onClick={() => {
+                  setSelectedItems(new Set());
+                  setShowArchived(!showArchived);
+                }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-md ${
+                  showArchived 
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {showArchived ? (
+                  <>
+                    <ArchiveRestore className="w-4 h-4" />
+                    Viewing Archived
+                  </>
+                ) : (
+                  <>
+                    <Archive className="w-4 h-4" />
+                    View Archived
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -172,7 +241,9 @@ export default function InventoryList() {
         selectedCount={selectedItems.size}
         onDelete={handleBulkDelete}
         onExport={handleExport}
-        onArchive={() => {/* Implement archive logic */}}
+        onArchive={showArchived ? handleBulkUnarchive : handleBulkArchive}
+        isArchiving={archiveOperationLoading}
+        isArchived={showArchived}
       />
 
       {showAddModal && (
@@ -180,6 +251,12 @@ export default function InventoryList() {
           onClose={() => setShowAddModal(false)}
           onAdd={addProduct}
         />
+      )}
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-lg">
+          {error}
+        </div>
       )}
     </div>
   );

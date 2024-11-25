@@ -9,7 +9,8 @@ import {
   query,
   orderBy,
   Timestamp,
-  where} from 'firebase/firestore';
+  where,
+  writeBatch} from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Product } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,8 +21,9 @@ export function useInventory() {
   const [sortField, setSortField] = useState<keyof Product>('name');
   const [filterCategory, setFilterCategory] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [showArchived, setShowArchived] = useState(false);
 
-  // Set up real-time listener
+  // Set up real-time listener with composite index
   useEffect(() => {
     if (!user) {
       setProducts([]);
@@ -29,27 +31,40 @@ export function useInventory() {
       return;
     }
 
-    // Create query with user filter
     const productsRef = collection(db, 'products');
+    // Create a compound query that will update in real-time
     const q = query(
       productsRef,
       where('userId', '==', user.uid),
-      orderBy('lastUpdated', 'desc')  // Changed to sort by lastUpdated
+      where('archived', '==', showArchived)
     );
 
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(q, 
+    setLoading(true);
+
+    const unsubscribe = onSnapshot(
+      q, 
       (snapshot) => {
-        const productsData = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            ...data,
-            id: doc.id,
-            lastUpdated: data.lastUpdated.toDate(),
-            expirationDate: data.expirationDate ? data.expirationDate.toDate() : undefined
-          } as Product;
-        });
-        setProducts(productsData);
+        const productsData = snapshot.docs.map(doc => ({
+          ...doc.data(),
+          id: doc.id,
+          lastUpdated: doc.data().lastUpdated.toDate(),
+          expirationDate: doc.data().expirationDate ? doc.data().expirationDate.toDate() : undefined,
+          archived: doc.data().archived ?? false
+        } as Product));
+
+        // Apply sorting if sortField is set
+        const sortedData = sortField 
+          ? [...productsData].sort((a, b) => {
+              const aValue = a[sortField];
+              const bValue = b[sortField];
+              if (aValue == null && bValue == null) return 0;
+              if (aValue == null) return 1;
+              if (bValue == null) return -1;
+              return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+            })
+          : productsData;
+
+        setProducts(sortedData);
         setLoading(false);
       },
       (error) => {
@@ -59,9 +74,9 @@ export function useInventory() {
     );
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, showArchived, sortField]); // Add sortField to dependencies
 
-  const addProduct = async (product: Omit<Product, 'id' | 'lastUpdated' | 'userId'>) => {
+  const addProduct = async (product: Omit<Product, 'id' | 'lastUpdated' | 'userId' | 'archived'>) => {
     if (!user) return;
     
     try {
@@ -69,27 +84,40 @@ export function useInventory() {
         ...product,
         userId: user.uid,
         lastUpdated: Timestamp.now(),
+        archived: false,
         expirationDate: product.expirationDate ? Timestamp.fromDate(new Date(product.expirationDate)) : null
       };
 
-      // Just add to Firestore and let the real-time listener handle the state update
       await addDoc(collection(db, 'products'), newProduct);
-      
     } catch (error) {
       console.error('Error adding product:', error);
-      // You might want to show an error message to the user here
+      throw error;
     }
   };
 
-  const deleteProduct = async (id: string) => {
+  const deleteProduct = async (ids: string | string[]) => {
+    if (!user) return;
+
     try {
-      await deleteDoc(doc(db, 'products', id));
+      const idsArray = Array.isArray(ids) ? ids : [ids];
+      const batch = writeBatch(db);
+      
+      for (const id of idsArray) {
+        const productRef = doc(db, 'products', id);
+        batch.delete(productRef);
+      }
+
+      await batch.commit();
+      // The onSnapshot listener will automatically update the UI
     } catch (error) {
-      console.error('Error deleting product:', error);
+      console.error('Error deleting products:', error);
+      throw error;
     }
   };
 
   const editProduct = async (id: string, updates: Partial<Product>) => {
+    if (!user) return;
+
     try {
       const productRef = doc(db, 'products', id);
       const updateData = {
@@ -100,36 +128,69 @@ export function useInventory() {
           : null
       };
       await updateDoc(productRef, updateData);
+      // The onSnapshot listener will automatically update the UI
     } catch (error) {
       console.error('Error updating product:', error);
+      throw error;
+    }
+  };
+
+  const archiveProducts = async (ids: string[]) => {
+    if (!user || ids.length === 0) return;
+
+    try {
+      const batch = writeBatch(db);
+      
+      for (const id of ids) {
+        const productRef = doc(db, 'products', id);
+        batch.update(productRef, { 
+          archived: true,
+          lastUpdated: Timestamp.now()
+        });
+      }
+
+      await batch.commit();
+      // The onSnapshot listener will automatically update the UI
+    } catch (error) {
+      console.error('Error archiving products:', error);
+      throw error;
+    }
+  };
+
+  const unarchiveProducts = async (ids: string[]) => {
+    if (!user || ids.length === 0) return;
+
+    try {
+      const batch = writeBatch(db);
+      
+      for (const id of ids) {
+        const productRef = doc(db, 'products', id);
+        batch.update(productRef, { 
+          archived: false,
+          lastUpdated: Timestamp.now()
+        });
+      }
+
+      await batch.commit();
+      // The onSnapshot listener will automatically update the UI
+    } catch (error) {
+      console.error('Error unarchiving products:', error);
+      throw error;
     }
   };
 
   const sortProducts = (field: keyof Product) => {
     setSortField(field);
-    const sorted = [...products].sort((a, b) => {
-      // Ensure both objects have the field
-      if (!(field in a) || !(field in b)) {
-        console.warn(`Sorting field "${field}" not found in one or both products`);
-        return 0;
-      }
+  };
 
-      const aValue = a[field];
-      const bValue = b[field];
-      
-      if (aValue == null && bValue == null) return 0;
-      if (aValue == null) return 1;
-      if (bValue == null) return -1;
-
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-    });
-    setProducts(sorted);
+  const getFilteredProducts = () => {
+    return products.filter(product => 
+      filterCategory === 'all' || product.category === filterCategory
+    );
   };
 
   return {
-    products: filterCategory === 'all' 
-      ? products 
-      : products.filter(p => p.category === filterCategory),
+    products: getFilteredProducts(),
     addProduct,
     deleteProduct,
     editProduct,
@@ -137,6 +198,10 @@ export function useInventory() {
     sortField,
     filterCategory,
     setFilterCategory,
-    loading
+    loading,
+    archiveProducts,
+    unarchiveProducts,
+    showArchived,
+    setShowArchived,
   };
 }

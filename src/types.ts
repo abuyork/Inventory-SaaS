@@ -9,6 +9,7 @@ export interface Product {
   reorderPoint: number;
   lastUpdated: Date;
   expirationDate?: Date;
+  archived: boolean;
 }
 
 export interface Category {
