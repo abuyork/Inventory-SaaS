@@ -1,4 +1,3 @@
-import React from 'react';
 import { TrendingDown, TrendingUp, AlertTriangle, Package } from 'lucide-react';
 
 export default function Dashboard() {
