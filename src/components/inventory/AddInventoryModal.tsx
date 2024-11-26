@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Product } from '../../types';
+import { modalStyles as styles } from '../../styles/modal';
 
 interface Props {
   onClose: () => void;
@@ -31,38 +32,35 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-md p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold">Add New Item</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-            <X className="w-5 h-5" />
+    <div className={styles.overlay}>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h3 className={styles.title}>Add New Item</h3>
+          <button onClick={onClose} className={styles.closeButton}>
+            <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className={styles.form}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Item Name
-            </label>
+            <label className={styles.label}>Item Name</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="input-primary w-full"
+              className={styles.input}
+              placeholder="Enter item name"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
-              </label>
+              <label className={styles.label}>Category</label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="input-primary w-full"
+                className={styles.select}
               >
                 <option>Produce</option>
                 <option>Meat</option>
@@ -71,13 +69,11 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Unit
-              </label>
+              <label className={styles.label}>Unit</label>
               <select
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                className="input-primary w-full"
+                className={styles.select}
               >
                 <option>kg</option>
                 <option>l</option>
@@ -89,60 +85,54 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Quantity
-              </label>
+              <label className={styles.label}>Quantity</label>
               <input
                 type="number"
                 value={formData.quantity}
                 onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                className="input-primary w-full"
+                className={styles.input}
                 required
                 min="0"
                 step="0.1"
+                placeholder="0.0"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Reorder Point
-              </label>
+              <label className={styles.label}>Reorder Point</label>
               <input
                 type="number"
                 value={formData.reorderPoint}
                 onChange={(e) => setFormData({ ...formData, reorderPoint: e.target.value })}
-                className="input-primary w-full"
+                className={styles.input}
                 required
                 min="0"
                 step="0.1"
+                placeholder="0.0"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Expiration Date
-              </label>
-              <input
-                type="date"
-                value={formData.expirationDate}
-                onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
-                className="input-primary w-full"
-              />
-            </div>
+          <div>
+            <label className={styles.label}>Expiration Date</label>
+            <input
+              type="date"
+              value={formData.expirationDate}
+              onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
+              className={styles.input}
+            />
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
+          <div className={styles.footer}>
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary"
+              className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-150"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-150"
             >
               Add Item
             </button>
