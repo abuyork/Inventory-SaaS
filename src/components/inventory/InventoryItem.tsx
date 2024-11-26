@@ -51,8 +51,8 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
 
   return (
     <>
-      <div className="grid grid-cols-8 gap-4 p-4 border-b border-gray-200 items-center hover:bg-gray-50">
-        <div>
+      <div className="grid grid-cols-8 gap-4 p-4 border-b border-gray-100 items-center hover:bg-gray-50/50 transition-colors duration-150">
+        <div className="flex items-center justify-center">
           <Checkbox
             checked={selected}
             onCheckedChange={() => onSelect(product.id)}
@@ -60,28 +60,30 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
         </div>
         <div className="col-span-2">
           <div className="flex items-center gap-2">
-            <p className="font-medium text-gray-800">{product.name}</p>
+            <p className="font-medium text-gray-800 hover:text-blue-600 cursor-pointer">
+              {product.name}
+            </p>
             {statusIcon}
           </div>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-400 mt-0.5">
             Updated {format(product.lastUpdated, 'MMM d, yyyy')}
           </p>
         </div>
-        <div className="text-gray-600">{product.category}</div>
-        <div className="text-gray-600">
+        <div className="text-gray-600 text-sm">{product.category}</div>
+        <div className="text-gray-600 text-sm font-medium">
           {product.quantity} {product.unit}
         </div>
-        <div className="text-gray-600">
+        <div className="text-gray-600 text-sm font-medium">
           {product.parLevel} {product.unit}
         </div>
         <div>
-          <span className={`px-2 py-1 rounded-full text-sm font-medium ${statusColor}`}>
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor}`}>
             {statusText}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button 
-            className="p-2 hover:bg-blue-50 rounded-full transition-colors"
+            className="p-1.5 hover:bg-blue-50 rounded-full transition-colors duration-150"
             onClick={() => setShowEditModal(true)}
             title="Edit item"
           >
@@ -89,7 +91,7 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
           </button>
           <button 
             onClick={handleDelete}
-            className="p-2 hover:bg-red-50 rounded-full transition-colors"
+            className="p-1.5 hover:bg-red-50 rounded-full transition-colors duration-150"
             title="Delete item"
           >
             <Trash className="w-4 h-4 text-red-600" />

@@ -177,9 +177,9 @@ export default function InventoryList() {
       )}
 
       <div className="bg-white rounded-lg shadow">
-        <div className="grid grid-cols-8 gap-4 p-4 border-b border-gray-200 bg-gray-50 font-medium">
+        <div className="grid grid-cols-8 gap-4 p-4 border-b border-gray-200 bg-gray-50/80 font-medium text-gray-600 text-sm">
           {products.length > 0 && (
-            <div>
+            <div className="flex items-center justify-center">
               <Checkbox
                 checked={selectedItems.size === products.length}
                 onCheckedChange={handleSelectAll}
@@ -187,7 +187,7 @@ export default function InventoryList() {
             </div>
           )}
           <div 
-            className={`${products.length > 0 ? 'col-span-2' : 'col-span-3'} cursor-pointer flex items-center gap-2`}
+            className={`${products.length > 0 ? 'col-span-2' : 'col-span-3'} cursor-pointer flex items-center gap-2 hover:text-blue-600`}
             onClick={() => sortProducts('name')}
           >
             Item
@@ -196,7 +196,7 @@ export default function InventoryList() {
             )}
           </div>
           <div 
-            className="cursor-pointer flex items-center gap-2"
+            className="cursor-pointer flex items-center gap-2 hover:text-blue-600"
             onClick={() => sortProducts('category')}
           >
             Category
@@ -205,7 +205,7 @@ export default function InventoryList() {
             )}
           </div>
           <div 
-            className="cursor-pointer flex items-center gap-2"
+            className="cursor-pointer flex items-center gap-2 hover:text-blue-600"
             onClick={() => sortProducts('quantity')}
           >
             Quantity
@@ -213,9 +213,9 @@ export default function InventoryList() {
               <ArrowUpDown className="w-4 h-4" />
             )}
           </div>
-          <div>Reorder Point</div>
-          <div>Status</div>
-          <div>Actions</div>
+          <div className="text-gray-600">Reorder Point</div>
+          <div className="text-gray-600">Status</div>
+          <div className="text-gray-600">Actions</div>
         </div>
         {loading ? (
           <div className="p-4 text-center text-gray-500">

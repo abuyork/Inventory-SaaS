@@ -32,16 +32,19 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-md p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold">Edit Item</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-            <X className="w-5 h-5" />
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-xl">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold text-gray-800">Edit Item</h3>
+          <button 
+            onClick={onClose} 
+            className="p-1.5 hover:bg-gray-100 rounded-full transition-colors duration-150"
+          >
+            <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Item Name
@@ -133,17 +136,17 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
+          <div className="flex justify-end gap-3 mt-8">
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary"
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-150"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn-primary"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-150"
             >
               Save Changes
             </button>
