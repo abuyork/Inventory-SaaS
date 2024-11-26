@@ -100,24 +100,24 @@ export default function InventoryList() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Inventory</h2>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-2">
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className="btn-secondary flex items-center gap-2"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
           >
             <Filter className="w-4 h-4" />
             Filter
           </button>
           <button 
             onClick={() => sortProducts('name')}
-            className="btn-secondary flex items-center gap-2"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
           >
             <ArrowUpDown className="w-4 h-4" />
             Sort
           </button>
           <button 
             onClick={() => setShowAddModal(true)}
-            className="btn-primary flex items-center gap-2"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
           >
             <Plus className="w-4 h-4" />
             Add Item
@@ -126,7 +126,7 @@ export default function InventoryList() {
       </div>
 
       {showFilters && (
-        <div className="mb-6 bg-white p-4 rounded-lg shadow-sm">
+        <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="flex gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -135,7 +135,7 @@ export default function InventoryList() {
               <select
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
-                className="input-primary"
+                className="block w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 {categories.map(category => (
                   <option key={category} value={category}>
@@ -153,10 +153,10 @@ export default function InventoryList() {
                   setSelectedItems(new Set());
                   setShowArchived(!showArchived);
                 }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md ${
+                className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150 ${
                   showArchived 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'bg-gray-100 text-gray-700'
+                    ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' 
+                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 {showArchived ? (
