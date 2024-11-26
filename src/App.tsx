@@ -1,4 +1,5 @@
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CategoriesProvider } from './contexts/CategoriesContext';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/layout/Header';
@@ -48,60 +49,64 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public route */}
-        <Route 
-          path="/login" 
-          element={user ? <Navigate to="/" replace /> : <LoginPage />} 
-        />
+    <AuthProvider>
+      <CategoriesProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public route */}
+            <Route 
+              path="/login" 
+              element={user ? <Navigate to="/" replace /> : <LoginPage />} 
+            />
 
-        {/* Protected routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/inventory"
-          element={
-            <ProtectedRoute>
-              <InventoryList />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/analytics"
-          element={
-            <ProtectedRoute>
-              <AnalyticsView />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/alerts"
-          element={
-            <ProtectedRoute>
-              <AlertsView />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <SettingsView />
-            </ProtectedRoute>
-          }
-        />
+            {/* Protected routes */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute>
+                  <InventoryList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <AnalyticsView />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alerts"
+              element={
+                <ProtectedRoute>
+                  <AlertsView />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <SettingsView />
+                </ProtectedRoute>
+              }
+            />
 
-        {/* Catch all route - redirect to dashboard */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+            {/* Catch all route - redirect to dashboard */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </CategoriesProvider>
+    </AuthProvider>
   );
 }
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Product } from '../../types';
 import { modalStyles as styles } from '../../styles/modal';
+import { useCategories } from '../../contexts/CategoriesContext';
 
 interface Props {
   product: Product;
@@ -10,6 +11,8 @@ interface Props {
 }
 
 export default function EditInventoryModal({ product, onClose, onEdit }: Props) {
+  const { categories } = useCategories();
+
   const [formData, setFormData] = useState({
     name: product.name,
     category: product.category,
@@ -61,10 +64,11 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 className={styles.select}
               >
-                <option>Produce</option>
-                <option>Meat</option>
-                <option>Dairy</option>
-                <option>Dry Goods</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.label}>
+                    {category.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

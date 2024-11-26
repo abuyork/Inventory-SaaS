@@ -8,7 +8,7 @@ import { Product } from '../../types';
 import { format } from 'date-fns';
 import EditInventoryModal from './EditInventoryModal';
 import { Checkbox } from '../ui/Checkbox';
-import { getCategoryStyles } from '../../config/categories';
+import { useCategories } from '../../contexts/CategoriesContext';
 
 interface Props {
   product: Product;
@@ -19,6 +19,7 @@ interface Props {
 }
 
 export default function InventoryItem({ product, onDelete, onEdit, selected, onSelect }: Props) {
+  const { categories } = useCategories();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -41,7 +42,10 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
   const statusText = getStatusText(product.quantity, product.reorderPoint);
   const statusIcon = getStatusIcon(product.quantity, product.reorderPoint);
 
-  const categoryStyles = getCategoryStyles(product.category);
+  const getCategoryColor = (categoryLabel: string) => {
+    const category = categories.find(c => c.label === categoryLabel);
+    return category?.color || '#94a3b8'; // default color if category not found
+  };
 
   const handleDelete = () => {
     setShowConfirmDelete(true);
@@ -73,7 +77,17 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
           </p>
         </div>
         <div className="text-gray-600 text-sm">
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${categoryStyles.bgColor} ${categoryStyles.textColor}`}>
+          <span 
+            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium"
+            style={{ 
+              backgroundColor: `${getCategoryColor(product.category)}15`,
+              color: getCategoryColor(product.category)
+            }}
+          >
+            <span 
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: getCategoryColor(product.category) }}
+            />
             {product.category}
           </span>
         </div>

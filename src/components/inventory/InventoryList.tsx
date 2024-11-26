@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Filter, ArrowUpDown, Archive, ArchiveRestore } from 'lucide-react';
+import { Plus, Filter, ArrowUpDown, Archive, ArchiveRestore, Settings } from 'lucide-react';
 import { useInventory } from '../../hooks/useInventory';
 import InventoryItem from './InventoryItem';
 import AddInventoryModal from './AddInventoryModal';
@@ -8,6 +8,8 @@ import { Product } from '../../types';
 import { format } from 'date-fns';
 import { Checkbox } from '../ui/Checkbox';
 import toast from 'react-hot-toast';
+import CategoryManagementModal from './CategoryManagementModal';
+import { useCategories } from '../../contexts/CategoriesContext';
 
 export default function InventoryList() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -15,6 +17,7 @@ export default function InventoryList() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [archiveOperationLoading, setArchiveOperationLoading] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const {
     products,
     addProduct,
@@ -30,8 +33,7 @@ export default function InventoryList() {
     showArchived,
     setShowArchived
   } = useInventory();
-
-  const categories = ['all', 'Produce', 'Meat', 'Dairy', 'Dry Goods'];
+  const { categories } = useCategories();
 
   const handleSelect = (id: string) => {
     const newSelected = new Set(selectedItems);
@@ -137,9 +139,10 @@ export default function InventoryList() {
                 onChange={(e) => setFilterCategory(e.target.value)}
                 className="block w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                {categories.map(category => (
-                  <option key={category} value={category}>
-                    {category === 'all' ? 'All Categories' : category}
+                <option value="all">All Categories</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.label}>
+                    {category.label}
                   </option>
                 ))}
               </select>
@@ -172,6 +175,18 @@ export default function InventoryList() {
                 )}
               </button>
             </div>
+          </div>
+          <div className="flex justify-between items-center">
+            <div className="flex gap-4">
+              {/* Existing filter controls */}
+            </div>
+            <button
+              onClick={() => setShowCategoryModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+            >
+              <Settings className="w-4 h-4" />
+              Manage Categories
+            </button>
           </div>
         </div>
       )}
@@ -259,6 +274,10 @@ export default function InventoryList() {
         <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-lg">
           {error}
         </div>
+      )}
+
+      {showCategoryModal && (
+        <CategoryManagementModal onClose={() => setShowCategoryModal(false)} />
       )}
     </div>
   );

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Product } from '../../types';
 import { modalStyles as styles } from '../../styles/modal';
-import { categories } from '../../config/categories';
+import { useCategories } from '../../contexts/CategoriesContext';
 
 interface Props {
   onClose: () => void;
@@ -10,6 +10,7 @@ interface Props {
 }
 
 export default function AddInventoryModal({ onClose, onAdd }: Props) {
+  const { categories } = useCategories();
   const [formData, setFormData] = useState({
     name: '',
     category: 'Produce',
