@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Pencil, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2, Edit } from 'lucide-react';
 import { useCategories, Category } from '../../contexts/CategoriesContext';
 import { modalStyles as styles } from '../../styles/modal';
 import toast from 'react-hot-toast';
@@ -93,7 +93,7 @@ export default function CategoryManagementModal({ onClose }: Props) {
             {categories.map((category) => (
               <div
                 key={category.id}
-                className="group relative flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150"
+                className="relative flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-150"
               >
                 {editingCategory?.id === category.id ? (
                   <form onSubmit={handleUpdateCategory} className="flex-1 flex items-center gap-3">
@@ -138,17 +138,17 @@ export default function CategoryManagementModal({ onClose }: Props) {
                         {category.label}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => setEditingCategory(category)}
-                        className="p-1.5 text-gray-500 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors duration-150"
+                        className="p-2 text-blue-500 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors duration-150"
                         title="Edit category"
                       >
-                        <Pencil className="w-4 h-4" />
+                        <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteCategory(category.id)}
-                        className="p-1.5 text-gray-500 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors duration-150"
+                        className="p-2 text-red-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-150"
                         title="Delete category"
                       >
                         <Trash2 className="w-4 h-4" />
