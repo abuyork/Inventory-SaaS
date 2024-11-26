@@ -213,7 +213,7 @@ export default function InventoryList() {
               <ArrowUpDown className="w-4 h-4" />
             )}
           </div>
-          <div>Par Level</div>
+          <div>Reorder Point</div>
           <div>Status</div>
           <div>Actions</div>
         </div>

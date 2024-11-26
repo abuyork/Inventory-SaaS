@@ -105,7 +105,7 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Par Level
+                Reorder Point
               </label>
               <input
                 type="number"
@@ -120,20 +120,6 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Reorder Point
-              </label>
-              <input
-                type="number"
-                value={formData.reorderPoint}
-                onChange={(e) => setFormData({ ...formData, reorderPoint: e.target.value })}
-                className="input-primary w-full"
-                required
-                min="0"
-                step="0.1"
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Expiration Date

@@ -21,27 +21,24 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const getStatusColor = (quantity: number, reorderPoint: number, parLevel: number) => {
+  const getStatusColor = (quantity: number, reorderPoint: number) => {
     if (quantity <= reorderPoint) return 'text-red-500 bg-red-50';
-    if (quantity < parLevel) return 'text-yellow-500 bg-yellow-50';
     return 'text-green-500 bg-green-50';
   };
 
-  const getStatusText = (quantity: number, reorderPoint: number, parLevel: number) => {
+  const getStatusText = (quantity: number, reorderPoint: number) => {
     if (quantity <= reorderPoint) return 'Low Stock';
-    if (quantity < parLevel) return 'Below Par';
     return 'In Stock';
   };
 
-  const getStatusIcon = (quantity: number, reorderPoint: number, parLevel: number) => {
+  const getStatusIcon = (quantity: number, reorderPoint: number) => {
     if (quantity <= reorderPoint) return <AlertCircle className="w-4 h-4 text-red-500" />;
-    if (quantity < parLevel) return <AlertCircle className="w-4 h-4 text-yellow-500" />;
     return null;
   };
 
-  const statusColor = getStatusColor(product.quantity, product.reorderPoint, product.parLevel);
-  const statusText = getStatusText(product.quantity, product.reorderPoint, product.parLevel);
-  const statusIcon = getStatusIcon(product.quantity, product.reorderPoint, product.parLevel);
+  const statusColor = getStatusColor(product.quantity, product.parLevel);
+  const statusText = getStatusText(product.quantity, product.parLevel);
+  const statusIcon = getStatusIcon(product.quantity, product.parLevel);
 
   const handleDelete = () => {
     setShowConfirmDelete(true);
