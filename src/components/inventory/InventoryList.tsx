@@ -265,13 +265,12 @@ export default function InventoryList() {
 }
 
 function convertToCSV(products: Product[]): string {
-  const headers = ['Name', 'Category', 'Quantity', 'Unit', 'Par Level', 'Reorder Point', 'Last Updated'];
+  const headers = ['Name', 'Category', 'Quantity', 'Unit', 'Reorder Point', 'Last Updated'];
   const rows = products.map(p => [
     p.name,
     p.category,
     p.quantity,
     p.unit,
-    p.parLevel,
     p.reorderPoint,
     format(p.lastUpdated, 'yyyy-MM-dd')
   ]);

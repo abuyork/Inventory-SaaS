@@ -13,7 +13,6 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
     category: 'Produce',
     quantity: '',
     unit: 'kg',
-    parLevel: '',
     reorderPoint: '',
     expirationDate: ''
   });
@@ -23,7 +22,6 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
     onAdd({
       ...formData,
       quantity: Number(formData.quantity),
-      parLevel: Number(formData.parLevel),
       reorderPoint: Number(formData.reorderPoint),
       expirationDate: formData.expirationDate ? new Date(formData.expirationDate) : undefined,
       userId: 'current-user',
@@ -106,23 +104,6 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Par Level
-              </label>
-              <input
-                type="number"
-                value={formData.parLevel}
-                onChange={(e) => setFormData({ ...formData, parLevel: e.target.value })}
-                className="input-primary w-full"
-                required
-                min="0"
-                step="0.1"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Reorder Point
               </label>
               <input
@@ -135,6 +116,9 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
                 step="0.1"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Expiration Date

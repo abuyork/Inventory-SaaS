@@ -36,9 +36,9 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
     return null;
   };
 
-  const statusColor = getStatusColor(product.quantity, product.parLevel);
-  const statusText = getStatusText(product.quantity, product.parLevel);
-  const statusIcon = getStatusIcon(product.quantity, product.parLevel);
+  const statusColor = getStatusColor(product.quantity, product.reorderPoint);
+  const statusText = getStatusText(product.quantity, product.reorderPoint);
+  const statusIcon = getStatusIcon(product.quantity, product.reorderPoint);
 
   const handleDelete = () => {
     setShowConfirmDelete(true);
@@ -74,7 +74,7 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
           {product.quantity} {product.unit}
         </div>
         <div className="text-gray-600 text-sm font-medium">
-          {product.parLevel} {product.unit}
+          {product.reorderPoint} {product.unit}
         </div>
         <div>
           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor}`}>

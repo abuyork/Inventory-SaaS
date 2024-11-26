@@ -19,7 +19,6 @@ service cloud.firestore {
         return incoming.name is string &&
                incoming.name.size() > 0 &&
                incoming.quantity >= 0 &&
-               incoming.parLevel >= 0 &&
                incoming.reorderPoint >= 0 &&
                incoming.userId == request.auth.uid;
       }

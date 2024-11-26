@@ -5,7 +5,6 @@ export interface Product {
   category: string;
   quantity: number;
   unit: string;
-  parLevel: number;
   reorderPoint: number;
   lastUpdated: Date;
   expirationDate?: Date;

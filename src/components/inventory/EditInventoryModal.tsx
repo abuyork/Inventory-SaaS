@@ -14,7 +14,6 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
     category: product.category,
     quantity: product.quantity.toString(),
     unit: product.unit,
-    parLevel: product.parLevel.toString(),
     reorderPoint: product.reorderPoint.toString(),
     expirationDate: product.expirationDate ? product.expirationDate.toISOString().split('T')[0] : ''
   });
@@ -24,7 +23,6 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
     onEdit(product.id, {
       ...formData,
       quantity: Number(formData.quantity),
-      parLevel: Number(formData.parLevel),
       reorderPoint: Number(formData.reorderPoint),
       expirationDate: formData.expirationDate ? new Date(formData.expirationDate) : undefined
     });
@@ -112,8 +110,8 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
               </label>
               <input
                 type="number"
-                value={formData.parLevel}
-                onChange={(e) => setFormData({ ...formData, parLevel: e.target.value })}
+                value={formData.reorderPoint}
+                onChange={(e) => setFormData({ ...formData, reorderPoint: e.target.value })}
                 className="input-primary w-full"
                 required
                 min="0"
