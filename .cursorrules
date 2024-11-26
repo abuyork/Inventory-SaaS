@@ -1,0 +1,72 @@
+# Core Architecture Rules
+- Follow React + TypeScript + Firebase architecture patterns
+- Use proper file organization: components/, contexts/, hooks/, pages/, config/
+- Maintain consistent component structure across feature modules (inventory, analytics, alerts, etc.)
+
+# Component Design Rules
+- Create beautiful, production-ready interfaces with attention to detail
+- Use Tailwind CSS for styling - maintain consistent class patterns
+- Follow established component patterns:
+  - Modal components (AddInventoryModal, EditInventoryModal pattern)
+  - List/Item patterns (InventoryList/InventoryItem pattern)
+  - View components for major features (AlertsView, AnalyticsView pattern)
+
+# State Management & Data Flow
+- Use Firebase Firestore for data persistence
+- Implement real-time updates using onSnapshot listeners
+- Use custom hooks for data management (useInventory pattern)
+- Use React Context for global state (AuthContext pattern)
+
+# UI/UX Standards
+- Use Lucide React icons exclusively for consistent iconography
+- Use Unsplash for stock photos (valid URLs only)
+- Follow established loading state patterns (LoadingScreen component)
+- Implement proper error handling and user feedback
+- Use consistent button styles:
+  - btn-primary: Blue background for primary actions
+  - btn-secondary: White background for secondary actions
+
+# Authentication & Security
+- Implement protected routes using ProtectedRoute component
+- Handle all authentication states (loading, error, success)
+- Use proper Firebase security rules
+- Maintain consistent auth flow patterns
+
+# Data Management
+- Follow established CRUD operation patterns
+- Use batch operations for bulk actions
+- Implement proper offline capabilities
+- Handle data sorting and filtering consistently
+
+# Form Handling
+- Use consistent form validation patterns
+- Implement proper error messaging
+- Follow established modal patterns for form dialogs
+- Use consistent input styling (input-primary class)
+
+# Performance & Optimization
+- Implement proper loading states
+- Use proper Firebase query patterns
+- Follow established pagination patterns
+- Optimize re-renders using proper React patterns
+
+# Layout & Navigation
+- Maintain consistent layout structure:
+  - Fixed sidebar (64px width)
+  - Fixed header
+  - Main content area with proper padding
+- Use consistent spacing and sizing
+
+# Error Handling
+- Implement proper error boundaries
+- Show user-friendly error messages
+- Handle edge cases gracefully
+- Log errors appropriately
+
+# Code Style
+- Use TypeScript interfaces for all props and state
+- Follow established naming conventions
+- Maintain consistent file structure
+- Use proper commenting for complex logic
+
+Remember: All new features and improvements must align with these patterns and maintain consistency with the existing codebase. 
