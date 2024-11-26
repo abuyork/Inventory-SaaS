@@ -13,6 +13,9 @@ export interface Product {
 
 export interface Category {
   id: string;
-  name: string;
-  icon: string;
+  label: string;
+  color: string;
+  bgColor: string;
+  textColor: string;
+  borderColor: string;
 }

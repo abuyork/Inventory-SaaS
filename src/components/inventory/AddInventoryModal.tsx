@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { Product } from '../../types';
 import { modalStyles as styles } from '../../styles/modal';
+import { categories } from '../../config/categories';
 
 interface Props {
   onClose: () => void;
@@ -62,10 +63,11 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 className={styles.select}
               >
-                <option>Produce</option>
-                <option>Meat</option>
-                <option>Dairy</option>
-                <option>Dry Goods</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.label}>
+                    {category.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

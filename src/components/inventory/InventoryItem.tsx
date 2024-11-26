@@ -8,6 +8,7 @@ import { Product } from '../../types';
 import { format } from 'date-fns';
 import EditInventoryModal from './EditInventoryModal';
 import { Checkbox } from '../ui/Checkbox';
+import { getCategoryStyles } from '../../config/categories';
 
 interface Props {
   product: Product;
@@ -40,6 +41,8 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
   const statusText = getStatusText(product.quantity, product.reorderPoint);
   const statusIcon = getStatusIcon(product.quantity, product.reorderPoint);
 
+  const categoryStyles = getCategoryStyles(product.category);
+
   const handleDelete = () => {
     setShowConfirmDelete(true);
   };
@@ -69,7 +72,11 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
             Updated {format(product.lastUpdated, 'MMM d, yyyy')}
           </p>
         </div>
-        <div className="text-gray-600 text-sm">{product.category}</div>
+        <div className="text-gray-600 text-sm">
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${categoryStyles.bgColor} ${categoryStyles.textColor}`}>
+            {product.category}
+          </span>
+        </div>
         <div className="text-gray-600 text-sm font-medium">
           {product.quantity} {product.unit}
         </div>
