@@ -13,7 +13,7 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
   const { categories } = useCategories();
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Produce',
+    categoryId: '',
     quantity: '',
     unit: 'kg',
     reorderPoint: '',
@@ -60,13 +60,14 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
             <div>
               <label className={styles.label}>Category</label>
               <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                 className={styles.select}
               >
+                <option value="">Select a category</option>
                 {categories.map(category => (
-                  <option key={category.id} value={category.label}>
-                    {category.label}
+                  <option key={category.id} value={category.id}>
+                    {category.name}
                   </option>
                 ))}
               </select>

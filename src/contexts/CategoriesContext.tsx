@@ -1,166 +1,243 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot,
+  doc,
+  runTransaction,
+  serverTimestamp,
+  addDoc,
+  updateDoc,
+  getDocs,
+  Timestamp
+} from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, getDocs, query, where } from 'firebase/firestore';
-
-export interface Category {
-  id: string;
-  label: string;
-  color: string;
-  isDefault?: boolean;
-}
-
-// Default categories that will always be present
-export const DEFAULT_CATEGORIES: Omit<Category, 'id'>[] = [
-  { label: 'Produce', color: '#22c55e' },
-  { label: 'Meat', color: '#ef4444' },
-  { label: 'Dairy', color: '#3b82f6' },
-  { label: 'Dry Goods', color: '#f59e0b' }
-];
+import { useAuth } from './AuthContext';
+import { Category, CategoryFormData, CategoryUpdateData, CATEGORY_CONSTANTS } from '../types';
+import toast from 'react-hot-toast';
 
 interface CategoriesContextType {
   categories: Category[];
-  addCategory: (label: string) => Promise<void>;
-  deleteCategory: (id: string) => Promise<void>;
-  updateCategory: (id: string, label: string) => Promise<void>;
   loading: boolean;
-  error: string | null;
+  error: Error | null;
+  addCategory: (data: CategoryFormData) => Promise<string>;
+  updateCategory: (id: string, data: Partial<CategoryUpdateData>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
+  getCategoryById: (id: string) => Category | undefined;
+  reorderCategories: (orderedIds: string[]) => Promise<void>;
 }
 
 const CategoriesContext = createContext<CategoriesContextType | undefined>(undefined);
 
+const logError = (error: unknown, context: string) => {
+  console.error(`[CategoriesContext] ${context}:`, {
+    error,
+    timestamp: new Date().toISOString(),
+    user: user?.uid
+  });
+};
+
 export function CategoriesProvider({ children }: { children: React.ReactNode }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const { user } = useAuth();
 
-  // Initialize default categories if they don't exist
+  // Subscribe to categories
   useEffect(() => {
-    const initializeDefaultCategories = async () => {
-      try {
-        const categoriesRef = collection(db, 'categories');
-        const defaultCategoriesQuery = query(categoriesRef, where('isDefault', '==', true));
-        const snapshot = await getDocs(defaultCategoriesQuery);
-        
-        // Get existing default categories
-        const existingDefaults = new Set(
-          snapshot.docs.map(doc => doc.data().label.toLowerCase())
-        );
-        
-        // Only add default categories that don't already exist
-        const categoriesToAdd = DEFAULT_CATEGORIES.filter(
-          category => !existingDefaults.has(category.label.toLowerCase())
-        );
-        
-        if (categoriesToAdd.length > 0) {
-          await Promise.all(
-            categoriesToAdd.map(category => 
-              addDoc(categoriesRef, category)
-            )
-          );
-        }
-      } catch (error) {
-        console.error('Error initializing default categories:', error);
-        setError('Failed to initialize default categories');
-      }
-    };
+    if (!user) {
+      setCategories([]);
+      setLoading(false);
+      return;
+    }
 
-    initializeDefaultCategories();
-  }, []);
-
-  // Listen for category changes
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
+    setLoading(true);
+    const categoriesQuery = query(
       collection(db, 'categories'),
+      where('userId', '==', user.uid)
+    );
+
+    const unsubscribe = onSnapshot(
+      categoriesQuery,
       (snapshot) => {
-        // Use a Map to ensure unique categories by label
-        const categoryMap = new Map();
-        
-        snapshot.docs.forEach(doc => {
-          const category = {
+        console.log('[CategoriesContext] Received categories snapshot:', {
+          count: snapshot.size,
+          docs: snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-          } as Category;
-          
-          // Only keep the first occurrence of each category label
-          if (!categoryMap.has(category.label.toLowerCase())) {
-            categoryMap.set(category.label.toLowerCase(), category);
-          }
+          }))
         });
-        
-        // Convert Map back to array and sort
-        const categoriesData = Array.from(categoryMap.values());
-        const sortedCategories = categoriesData.sort((a, b) => {
-          if (a.isDefault && !b.isDefault) return -1;
-          if (!a.isDefault && b.isDefault) return 1;
-          return a.label.localeCompare(b.label);
-        });
-        
-        setCategories(sortedCategories);
+        const categoriesData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate() || new Date(),
+          updatedAt: doc.data().updatedAt?.toDate() || new Date()
+        })) as Category[];
+        setCategories(categoriesData);
         setLoading(false);
+        setError(null);
       },
-      (error) => {
-        console.error('Error fetching categories:', error);
-        setError('Failed to load categories');
+      (err) => {
+        logError(err, 'Error fetching categories');
+        setError(err as Error);
         setLoading(false);
+        toast.error('Failed to load categories');
       }
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
-  const addCategory = async (label: string) => {
+  // Add new category
+  const addCategory = useCallback(async (data: CategoryFormData): Promise<string> => {
+    if (!user) throw new Error('User must be authenticated');
+
     try {
-      // Check if category with same label already exists
-      if (categories.some(cat => cat.label.toLowerCase() === label.toLowerCase())) {
-        throw new Error('Category with this name already exists');
+      // Check category count
+      const categoriesQuery = query(
+        collection(db, 'categories'),
+        where('userId', '==', user.uid),
+        where('isActive', '==', true)
+      );
+      const categoriesSnapshot = await getDocs(categoriesQuery);
+      
+      if (categoriesSnapshot.size >= CATEGORY_CONSTANTS.MAX_CATEGORIES_PER_USER) {
+        throw new Error(`Maximum number of categories (${CATEGORY_CONSTANTS.MAX_CATEGORIES_PER_USER}) reached`);
       }
 
-      const color = `#${Math.floor(Math.random()*16777215).toString(16)}`;
-      await addDoc(collection(db, 'categories'), {
-        label,
-        color,
+      // Create new category
+      const newCategory = {
+        ...data,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        isActive: true,
+        productCount: 0,
+        sortOrder: categoriesSnapshot.size,
         isDefault: false
+      };
+
+      const docRef = await addDoc(collection(db, 'categories'), newCategory);
+      toast.success('Category added successfully');
+      return docRef.id;
+
+    } catch (err) {
+      console.error('Error adding category:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to add category');
+      throw err;
+    }
+  }, [user]);
+
+  // Update category
+  const updateCategory = useCallback(async (id: string, data: Partial<CategoryUpdateData>) => {
+    if (!user) throw new Error('User must be authenticated');
+
+    try {
+      const categoryRef = doc(db, 'categories', id);
+      await updateDoc(categoryRef, {
+        ...data,
+        updatedAt: serverTimestamp()
       });
-    } catch (error) {
-      console.error('Error adding category:', error);
-      throw error;
-    }
-  };
 
-  const deleteCategory = async (id: string) => {
+      toast.success('Category updated successfully');
+    } catch (err) {
+      console.error('Error updating category:', err);
+      toast.error('Failed to update category');
+      throw err;
+    }
+  }, [user]);
+
+  // Delete category (soft delete)
+  const deleteCategory = useCallback(async (id: string) => {
+    if (!user) throw new Error('User must be authenticated');
+
     try {
-      await deleteDoc(doc(db, 'categories', id));
-    } catch (error) {
-      console.error('Error deleting category:', error);
-      throw error;
-    }
-  };
+      const categoryRef = doc(db, 'categories', id);
+      await runTransaction(db, async (transaction) => {
+        const categoryDoc = await transaction.get(categoryRef);
+        
+        if (!categoryDoc.exists()) {
+          throw new Error('Category not found');
+        }
 
-  const updateCategory = async (id: string, label: string) => {
+        const categoryData = categoryDoc.data() as Category;
+        if (categoryData.userId !== user.uid) {
+          throw new Error('Unauthorized to delete this category');
+        }
+
+        if (categoryData.isDefault) {
+          throw new Error('Cannot delete default category');
+        }
+
+        // Check if category has products
+        const productsQuery = query(
+          collection(db, 'products'),
+          where('categoryId', '==', id),
+          where('userId', '==', user.uid)
+        );
+        const productsSnapshot = await transaction.get(productsQuery);
+
+        if (!productsSnapshot.empty) {
+          throw new Error('Cannot delete category with associated products');
+        }
+
+        transaction.update(categoryRef, {
+          isActive: false,
+          updatedAt: serverTimestamp()
+        });
+      });
+
+      toast.success('Category deleted successfully');
+    } catch (err) {
+      console.error('Error deleting category:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to delete category');
+      throw err;
+    }
+  }, [user]);
+
+  // Get category by ID
+  const getCategoryById = useCallback((id: string) => {
+    return categories.find(category => category.id === id);
+  }, [categories]);
+
+  // Reorder categories
+  const reorderCategories = useCallback(async (orderedIds: string[]) => {
+    if (!user) throw new Error('User must be authenticated');
+
     try {
-      if (categories.some(cat => 
-        cat.id !== id && 
-        cat.label.toLowerCase() === label.toLowerCase()
-      )) {
-        throw new Error('Category with this name already exists');
-      }
+      await runTransaction(db, async (transaction) => {
+        orderedIds.forEach((id, index) => {
+          const categoryRef = doc(db, 'categories', id);
+          transaction.update(categoryRef, {
+            sortOrder: index,
+            updatedAt: serverTimestamp()
+          });
+        });
+      });
 
-      await updateDoc(doc(db, 'categories', id), { label });
-    } catch (error) {
-      console.error('Error updating category:', error);
-      throw error;
+      toast.success('Categories reordered successfully');
+    } catch (err) {
+      console.error('Error reordering categories:', err);
+      toast.error('Failed to reorder categories');
+      throw err;
     }
+  }, [user]);
+
+  const value = {
+    categories,
+    loading,
+    error,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    getCategoryById,
+    reorderCategories
   };
 
   return (
-    <CategoriesContext.Provider value={{
-      categories,
-      addCategory,
-      deleteCategory,
-      updateCategory,
-      loading,
-      error
-    }}>
+    <CategoriesContext.Provider value={value}>
       {children}
     </CategoriesContext.Provider>
   );

@@ -15,7 +15,7 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
 
   const [formData, setFormData] = useState({
     name: product.name,
-    category: product.category,
+    categoryId: product.categoryId,
     quantity: product.quantity.toString(),
     unit: product.unit,
     reorderPoint: product.reorderPoint.toString(),
@@ -60,13 +60,13 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
             <div>
               <label className={styles.label}>Category</label>
               <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                 className={styles.select}
               >
                 {categories.map(category => (
-                  <option key={category.id} value={category.label}>
-                    {category.label}
+                  <option key={category.id} value={category.id}>
+                    {category.name}
                   </option>
                 ))}
               </select>

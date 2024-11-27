@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Filter, ArrowUpDown, Archive, ArchiveRestore, Settings } from 'lucide-react';
 import { useInventory } from '../../hooks/useInventory';
 import InventoryItem from './InventoryItem';
@@ -25,15 +25,21 @@ export default function InventoryList() {
     editProduct,
     sortProducts,
     sortField,
-    filterCategory,
-    setFilterCategory,
-    loading,
+    loading: productsLoading,
     archiveProducts,
     unarchiveProducts,
     showArchived,
     setShowArchived
   } = useInventory();
-  const { categories } = useCategories();
+
+  const { categories, loading: categoriesLoading } = useCategories();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+
+  // Filter products by category
+  const filteredProducts = useMemo(() => {
+    if (selectedCategoryId === 'all') return products;
+    return products.filter(product => product.categoryId === selectedCategoryId);
+  }, [products, selectedCategoryId]);
 
   const handleSelect = (id: string) => {
     const newSelected = new Set(selectedItems);
@@ -46,10 +52,10 @@ export default function InventoryList() {
   };
 
   const handleSelectAll = () => {
-    if (selectedItems.size === products.length) {
+    if (selectedItems.size === filteredProducts.length) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(new Set(products.map(p => p.id)));
+      setSelectedItems(new Set(filteredProducts.map(p => p.id)));
     }
   };
 
@@ -69,7 +75,7 @@ export default function InventoryList() {
     } catch (error) {
       setError('Failed to archive items. Please try again.');
       console.error('Archive error:', error);
-      toast.error("Failed to archive items. Please try again.");
+      toast.error("Failed to archive items");
     } finally {
       setArchiveOperationLoading(false);
     }
@@ -86,7 +92,7 @@ export default function InventoryList() {
     } catch (error) {
       setError('Failed to restore items. Please try again.');
       console.error('Unarchive error:', error);
-      toast.error("Failed to restore items. Please try again.");
+      toast.error("Failed to restore items");
     } finally {
       setArchiveOperationLoading(false);
     }
@@ -97,6 +103,8 @@ export default function InventoryList() {
     const csv = convertToCSV(selectedProducts);
     downloadCSV(csv, 'inventory-export.csv');
   };
+
+  const loading = productsLoading || categoriesLoading;
 
   return (
     <div className="p-6">
@@ -135,14 +143,14 @@ export default function InventoryList() {
                 Category
               </label>
               <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
+                value={selectedCategoryId}
+                onChange={(e) => setSelectedCategoryId(e.target.value)}
                 className="block w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Categories</option>
                 {categories.map((category) => (
-                  <option key={category.id} value={category.label}>
-                    {category.label}
+                  <option key={category.id} value={category.id}>
+                    {category.name}
                   </option>
                 ))}
               </select>
@@ -181,16 +189,16 @@ export default function InventoryList() {
 
       <div className="bg-white rounded-lg shadow">
         <div className="grid grid-cols-8 gap-4 p-4 border-b border-gray-200 bg-gray-50/80 font-medium text-gray-600 text-sm">
-          {products.length > 0 && (
+          {filteredProducts.length > 0 && (
             <div className="flex items-center justify-center">
               <Checkbox
-                checked={selectedItems.size === products.length}
+                checked={selectedItems.size === filteredProducts.length}
                 onCheckedChange={handleSelectAll}
               />
             </div>
           )}
           <div 
-            className={`${products.length > 0 ? 'col-span-2' : 'col-span-3'} cursor-pointer flex items-center gap-2 hover:text-blue-600`}
+            className={`${filteredProducts.length > 0 ? 'col-span-2' : 'col-span-3'} cursor-pointer flex items-center gap-2 hover:text-blue-600`}
             onClick={() => sortProducts('name')}
           >
             Item
@@ -220,16 +228,27 @@ export default function InventoryList() {
           <div className="text-gray-600">Status</div>
           <div className="text-gray-600">Actions</div>
         </div>
+
         {loading ? (
           <div className="p-4 text-center text-gray-500">
             Loading inventory...
           </div>
-        ) : products.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">
-            No items in inventory
+        ) : filteredProducts.length === 0 ? (
+          <div className="p-8 text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-4">
+              <Archive className="w-6 h-6 text-gray-400" />
+            </div>
+            <h3 className="text-sm font-medium text-gray-900 mb-1">No items found</h3>
+            <p className="text-sm text-gray-500">
+              {showArchived 
+                ? "No archived items found" 
+                : selectedCategoryId !== 'all'
+                  ? "No items in this category"
+                  : "Get started by adding your first inventory item"}
+            </p>
           </div>
         ) : (
-          products.map(product => (
+          filteredProducts.map(product => (
             <InventoryItem 
               key={product.id} 
               product={product}
@@ -258,14 +277,16 @@ export default function InventoryList() {
         />
       )}
 
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-lg">
-          {error}
-        </div>
+      {showCategoryModal && (
+        <CategoryManagementModal 
+          onClose={() => setShowCategoryModal(false)} 
+        />
       )}
 
-      {showCategoryModal && (
-        <CategoryManagementModal onClose={() => setShowCategoryModal(false)} />
+      {error && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-50 text-red-600 px-4 py-2 rounded-lg shadow-lg">
+          {error}
+        </div>
       )}
     </div>
   );
@@ -275,7 +296,7 @@ function convertToCSV(products: Product[]): string {
   const headers = ['Name', 'Category', 'Quantity', 'Unit', 'Reorder Point', 'Last Updated'];
   const rows = products.map(p => [
     p.name,
-    p.category,
+    p.categoryId,
     p.quantity,
     p.unit,
     p.reorderPoint,

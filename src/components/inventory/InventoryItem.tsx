@@ -42,10 +42,15 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
   const statusText = getStatusText(product.quantity, product.reorderPoint);
   const statusIcon = getStatusIcon(product.quantity, product.reorderPoint);
 
-  const getCategoryColor = (categoryLabel: string) => {
-    const category = categories.find(c => c.label === categoryLabel);
-    return category?.color || '#94a3b8'; // default color if category not found
+  const getCategoryDetails = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId);
+    return {
+      name: category?.name || 'Unknown',
+      color: category?.color || '#94a3b8'
+    };
   };
+
+  const { name: categoryName, color: categoryColor } = getCategoryDetails(product.categoryId);
 
   const handleDelete = () => {
     setShowConfirmDelete(true);
@@ -80,15 +85,15 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
           <span 
             className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium"
             style={{ 
-              backgroundColor: `${getCategoryColor(product.category)}15`,
-              color: getCategoryColor(product.category)
+              backgroundColor: `${categoryColor}15`,
+              color: categoryColor
             }}
           >
             <span 
               className="w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: getCategoryColor(product.category) }}
+              style={{ backgroundColor: categoryColor }}
             />
-            {product.category}
+            {categoryName}
           </span>
         </div>
         <div className="text-gray-600 text-sm font-medium">
