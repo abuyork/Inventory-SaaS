@@ -12,9 +12,11 @@ import {
 import { db } from '../config/firebase';
 import { Product } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useCategories } from '../contexts/CategoriesContext';
 
 export function useInventory() {
   const { user } = useAuth();
+  const { categories } = useCategories();
   const [products, setProducts] = useState<Product[]>([]);
   const [sortField, setSortField] = useState<keyof Product>('name');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -187,6 +189,57 @@ export function useInventory() {
     );
   };
 
+  const exportSelectedItems = async (selectedIds: string[]) => {
+    try {
+      if (!selectedIds || selectedIds.length === 0) {
+        throw new Error('No items selected for export');
+      }
+
+      const exportData = selectedIds.map(id => {
+        const item = products.find(product => product.id === id);
+        if (!item) return null;
+        
+        // Get category name from categoryId
+        const category = categories?.find(c => c.id === item.categoryId)?.name || 'Uncategorized';
+        
+        // Determine status based on quantity and reorderPoint
+        const status = determineStatus(item.quantity, item.reorderPoint);
+        
+        // Format the data for Excel export
+        return {
+          'Item Name': item.name,
+          'Category': category,
+          'Quantity': `${item.quantity}`, 
+          'Reorder Point': `${item.reorderPoint}`,
+          'Status': status,
+          'Last Updated': item.lastUpdated instanceof Date 
+            ? item.lastUpdated.toLocaleDateString() 
+            : new Date(item.lastUpdated).toLocaleDateString(),
+        };
+      }).filter((item): item is NonNullable<typeof item> => item !== null);
+
+      if (exportData.length === 0) {
+        throw new Error('No data available for export');
+      }
+
+      return exportData;
+    } catch (error) {
+      console.error('Export error:', error);
+      throw error;
+    }
+  };
+
+  // Helper function to determine status
+  const determineStatus = (quantity: number, reorderPoint: number): string => {
+    if (quantity <= 0) {
+      return 'Out of Stock';
+    } else if (quantity <= reorderPoint) {
+      return 'Low Stock';
+    } else {
+      return 'In Stock';
+    }
+  };
+
   return {
     products: getFilteredProducts(),
     addProduct,
@@ -201,5 +254,6 @@ export function useInventory() {
     unarchiveProducts,
     showArchived,
     setShowArchived,
+    exportSelectedItems,
   };
 }

@@ -29,7 +29,8 @@ export default function InventoryList() {
     archiveProducts,
     unarchiveProducts,
     showArchived,
-    setShowArchived
+    setShowArchived,
+    exportSelectedItems
   } = useInventory();
 
   const { categories, loading: categoriesLoading } = useCategories();
@@ -98,10 +99,8 @@ export default function InventoryList() {
     }
   };
 
-  const handleExport = () => {
-    const selectedProducts = products.filter(p => selectedItems.has(p.id));
-    const csv = convertToCSV(selectedProducts);
-    downloadCSV(csv, 'inventory-export.csv');
+  const handleExport = async () => {
+    return await exportSelectedItems(Array.from(selectedItems));
   };
 
   const loading = productsLoading || categoriesLoading;

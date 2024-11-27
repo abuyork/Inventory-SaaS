@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Trash2, Archive, Download, ArchiveRestore } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import * as XLSX from 'xlsx';
 
 interface Props {
   selectedCount: number;
   onDelete: () => void;
-  onExport: () => void;
+  onExport: () => Promise<Array<any>>;
   onArchive: () => Promise<void>;
   isArchiving?: boolean;
   isArchived?: boolean;
@@ -23,7 +24,7 @@ export default function BulkActionsBar({
   const [showArchiveSuccess, setShowArchiveSuccess] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  if (selectedCount === 0) return null;
+  if (!selectedCount || selectedCount === 0) return null;
 
   const handleDelete = () => {
     setShowConfirmDelete(true);
@@ -48,10 +49,43 @@ export default function BulkActionsBar({
 
   const handleExport = async () => {
     try {
-      await onExport();
+      console.log('Starting export...');
+      const data = await onExport();
+      console.log('Export data received:', data);
+      
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        throw new Error('No data available for export');
+      }
+
+      // Create a new workbook
+      const wb = XLSX.utils.book_new();
+      
+      // Convert data to worksheet
+      const ws = XLSX.utils.json_to_sheet(data, {
+        header: Object.keys(data[0]),
+        skipHeader: false
+      });
+      
+      // Auto-size columns
+      const colWidths = Object.keys(data[0]).map(key => ({
+        wch: Math.max(key.length, 
+          ...data.map(row => String(row[key]).length))
+      }));
+      ws['!cols'] = colWidths;
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Inventory");
+      
+      // Generate Excel file
+      const fileName = `inventory_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      console.log('Generating file:', fileName);
+      XLSX.writeFile(wb, fileName);
+      
+      toast.success('Export completed successfully');
     } catch (err) {
+      console.error('Export error:', err);
       setError(err instanceof Error ? err : new Error('Export failed'));
-      toast.error('Failed to export items');
+      toast.error(err instanceof Error ? err.message : 'Failed to export items');
     }
   };
 

@@ -2,14 +2,13 @@ import { Timestamp } from 'firebase/firestore';
 
 export interface Product {
   id: string;
-  userId: string;
   name: string;
-  categoryId: string;
+  category: string;
   quantity: number;
-  unit: string;
   reorderPoint: number;
+  status: string;
   lastUpdated: Date;
-  expirationDate?: Date;
+  userId: string;
   archived: boolean;
 }
 
