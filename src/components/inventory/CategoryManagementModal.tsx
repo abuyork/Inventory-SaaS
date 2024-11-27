@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import DOMPurify from 'dompurify';
 
 interface Props {
   onClose: () => void;
@@ -84,8 +85,21 @@ export default function CategoryManagementModal({ onClose }: Props) {
   // Handle category addition
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      toast.error('You must be logged in to add categories');
+    if (!user?.uid) {
+      toast.error('Authentication required');
+      return;
+    }
+
+    // Add input sanitization
+    const sanitizedName = DOMPurify.sanitize(newCategory.name.trim());
+    if (sanitizedName !== newCategory.name.trim()) {
+      toast.error('Invalid characters in category name');
+      return;
+    }
+
+    // Add rate limiting check
+    if (categories.length >= CATEGORY_CONSTANTS.MAX_CATEGORIES_PER_USER) {
+      toast.error(`Maximum ${CATEGORY_CONSTANTS.MAX_CATEGORIES_PER_USER} categories allowed`);
       return;
     }
 

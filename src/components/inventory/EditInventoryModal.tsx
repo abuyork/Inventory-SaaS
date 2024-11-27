@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { Product } from '../../types';
 import { modalStyles as styles } from '../../styles/modal';
 import { useCategories } from '../../contexts/CategoriesContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import debounce from 'lodash/debounce';
 
 interface Props {
   product: Product;
@@ -27,6 +28,18 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
     expirationDate: product.expirationDate ? product.expirationDate.toISOString().split('T')[0] : ''
   });
 
+  const categoryOptions = useMemo(() => 
+    categories.filter(category => category.isActive !== false),
+    [categories]
+  );
+
+  const debouncedUpdate = useCallback(
+    debounce((updates: Partial<Product>) => {
+      onEdit(product.id, updates);
+    }, 500),
+    [product.id, onEdit]
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -42,7 +55,7 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
         return;
       }
 
-      await onEdit(product.id, {
+      await debouncedUpdate({
         ...formData,
         quantity: Number(formData.quantity),
         reorderPoint: Number(formData.reorderPoint),
@@ -89,7 +102,7 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                 className={styles.select}
               >
-                {categories.map(category => (
+                {categoryOptions.map(category => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>

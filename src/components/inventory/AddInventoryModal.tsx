@@ -34,6 +34,29 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
       return;
     }
 
+    if (!formData.name.trim()) {
+      toast.error('Item name is required');
+      return;
+    }
+
+    if (formData.quantity < 0) {
+      toast.error('Quantity cannot be negative');
+      return;
+    }
+
+    if (formData.reorderPoint < 0) {
+      toast.error('Reorder point cannot be negative');
+      return;
+    }
+
+    if (formData.expirationDate) {
+      const expirationDate = new Date(formData.expirationDate);
+      if (expirationDate < new Date()) {
+        toast.error('Expiration date cannot be in the past');
+        return;
+      }
+    }
+
     try {
       if (!formData.categoryId) {
         toast.error('Please select a category');

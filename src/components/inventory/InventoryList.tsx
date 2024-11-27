@@ -114,8 +114,11 @@ export default function InventoryList() {
           <button 
             onClick={() => setShowFilters(!showFilters)}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
+            aria-expanded={showFilters}
+            aria-controls="filters-panel"
+            aria-label="Toggle filters"
           >
-            <Filter className="w-4 h-4" />
+            <Filter className="w-4 h-4" aria-hidden="true" />
             Filter
           </button>
           <button
@@ -187,7 +190,11 @@ export default function InventoryList() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow">
+      <div 
+        role="grid"
+        aria-label="Inventory items"
+        className="bg-white rounded-lg shadow"
+      >
         <div className="grid grid-cols-8 gap-4 p-4 border-b border-gray-200 bg-gray-50/80 font-medium text-gray-600 text-sm">
           {filteredProducts.length > 0 && (
             <div className="flex items-center justify-center">

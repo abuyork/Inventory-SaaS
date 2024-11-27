@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Trash2, Archive, Download, ArchiveRestore } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface Props {
   selectedCount: number;
@@ -20,6 +21,7 @@ export default function BulkActionsBar({
 }: Props) {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showArchiveSuccess, setShowArchiveSuccess] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   if (selectedCount === 0) return null;
 
@@ -43,6 +45,30 @@ export default function BulkActionsBar({
       setShowArchiveSuccess(false);
     }
   };
+
+  const handleExport = async () => {
+    try {
+      await onExport();
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Export failed'));
+      toast.error('Failed to export items');
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-50 text-red-600 px-4 py-2 rounded-lg shadow-lg">
+        {error.message}
+        <button 
+          onClick={() => setError(null)}
+          className="ml-2 text-red-800 hover:text-red-900"
+          aria-label="Dismiss error"
+        >
+          ×
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -86,7 +112,7 @@ export default function BulkActionsBar({
           )}
         </button>
         <button
-          onClick={onExport}
+          onClick={handleExport}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-700"
         >
           <Download className="w-4 h-4" />
