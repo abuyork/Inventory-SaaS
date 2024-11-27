@@ -4,6 +4,9 @@ import { useCategories } from '../../contexts/CategoriesContext';
 import { Category, CategoryFormData, CATEGORY_CONSTANTS } from '../../types';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import toast from 'react-hot-toast';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../config/firebase';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Props {
   onClose: () => void;
@@ -17,13 +20,14 @@ interface ValidationErrors {
 
 export default function CategoryManagementModal({ onClose }: Props) {
   const { 
-    categories, 
+    categories: allCategories, 
     addCategory, 
     deleteCategory, 
     updateCategory, 
     reorderCategories,
     loading 
   } = useCategories();
+  const categories = allCategories.filter(category => category.isActive !== false);
 
   const [newCategory, setNewCategory] = useState<CategoryFormData>({
     name: '',
@@ -34,6 +38,7 @@ export default function CategoryManagementModal({ onClose }: Props) {
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedColor, setSelectedColor] = useState(CATEGORY_CONSTANTS.DEFAULT_COLORS[0]);
+  const { user } = useAuth();
 
   // Filter categories based on search term
   const filteredCategories = categories.filter(category => 
@@ -67,6 +72,11 @@ export default function CategoryManagementModal({ onClose }: Props) {
   // Handle category addition
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      toast.error('You must be logged in to add categories');
+      return;
+    }
+
     if (!validateCategory(newCategory) || isSubmitting) return;
 
     try {
@@ -74,10 +84,13 @@ export default function CategoryManagementModal({ onClose }: Props) {
       await addCategory(newCategory);
       setNewCategory({ name: '', color: selectedColor.value });
       setValidationErrors({});
+      toast.success('Category added successfully');
     } catch (error) {
-      if (error instanceof Error) {
-        setValidationErrors({ general: error.message });
-      }
+      console.error('Error adding category:', error);
+      setValidationErrors({ 
+        general: error instanceof Error ? error.message : 'Failed to add category' 
+      });
+      toast.error(error instanceof Error ? error.message : 'Failed to add category');
     } finally {
       setIsSubmitting(false);
     }
@@ -85,6 +98,11 @@ export default function CategoryManagementModal({ onClose }: Props) {
 
   // Handle category update
   const handleUpdateCategory = async (category: Category, newData: Partial<CategoryFormData>) => {
+    if (!user) {
+      toast.error('You must be logged in to update categories');
+      return;
+    }
+
     if (isSubmitting) return;
 
     const updatedData = { ...category, ...newData };
@@ -95,10 +113,13 @@ export default function CategoryManagementModal({ onClose }: Props) {
       await updateCategory(category.id, newData);
       setEditingCategory(null);
       setValidationErrors({});
+      toast.success('Category updated successfully');
     } catch (error) {
-      if (error instanceof Error) {
-        setValidationErrors({ general: error.message });
-      }
+      console.error('Error updating category:', error);
+      setValidationErrors({ 
+        general: error instanceof Error ? error.message : 'Failed to update category' 
+      });
+      toast.error(error instanceof Error ? error.message : 'Failed to update category');
     } finally {
       setIsSubmitting(false);
     }
@@ -106,15 +127,33 @@ export default function CategoryManagementModal({ onClose }: Props) {
 
   // Handle category deletion
   const handleDeleteCategory = async (category: Category) => {
-    if (isSubmitting) return;
+    if (!user) {
+      toast.error('You must be logged in to delete categories');
+      return;
+    }
+
+    if (isSubmitting || category.isDefault) return;
 
     try {
       setIsSubmitting(true);
+      
+      // Check if category has associated products
+      const productsQuery = query(
+        collection(db, 'products'),
+        where('categoryId', '==', category.id),
+        where('userId', '==', user.uid)
+      );
+      const productsSnapshot = await getDocs(productsQuery);
+
+      if (!productsSnapshot.empty) {
+        toast.error('Cannot delete category with associated products');
+        return;
+      }
+
       await deleteCategory(category.id);
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      }
+      console.error('Error deleting category:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete category');
     } finally {
       setIsSubmitting(false);
     }
@@ -138,6 +177,13 @@ export default function CategoryManagementModal({ onClose }: Props) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-xl w-full max-w-2xl shadow-2xl max-h-[90vh] flex flex-col">
+        {/* Show general error if exists */}
+        {validationErrors.general && (
+          <div className="px-6 py-3 bg-red-50 border-b border-red-200">
+            <p className="text-sm text-red-600">{validationErrors.general}</p>
+          </div>
+        )}
+        
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>

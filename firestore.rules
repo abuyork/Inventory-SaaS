@@ -42,7 +42,9 @@ service cloud.firestore {
           isValidColor(request.resource.data.color)
         );
 
-      allow delete: if false; // Soft delete only through isActive flag
+      allow delete: if isAuthenticated() 
+        && resource.data.userId == request.auth.uid 
+        && !resource.data.isDefault;
     }
 
     // Products collection rules with category validation

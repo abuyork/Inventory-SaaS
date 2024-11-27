@@ -3,6 +3,8 @@ import { X } from 'lucide-react';
 import { Product } from '../../types';
 import { modalStyles as styles } from '../../styles/modal';
 import { useCategories } from '../../contexts/CategoriesContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { toast } from 'react-hot-toast';
 
 interface Props {
   product: Product;
@@ -11,7 +13,10 @@ interface Props {
 }
 
 export default function EditInventoryModal({ product, onClose, onEdit }: Props) {
-  const { categories } = useCategories();
+  const { categories: allCategories } = useCategories();
+  const { user } = useAuth();
+
+  const categories = allCategories.filter(category => category.isActive !== false);
 
   const [formData, setFormData] = useState({
     name: product.name,
@@ -22,15 +27,35 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
     expirationDate: product.expirationDate ? product.expirationDate.toISOString().split('T')[0] : ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onEdit(product.id, {
-      ...formData,
-      quantity: Number(formData.quantity),
-      reorderPoint: Number(formData.reorderPoint),
-      expirationDate: formData.expirationDate ? new Date(formData.expirationDate) : undefined
-    });
-    onClose();
+    
+    if (!user) {
+      toast.error('You must be logged in to edit items');
+      return;
+    }
+
+    try {
+      const selectedCategory = categories.find(c => c.id === formData.categoryId);
+      if (!selectedCategory) {
+        toast.error('Please select a valid category');
+        return;
+      }
+
+      await onEdit(product.id, {
+        ...formData,
+        quantity: Number(formData.quantity),
+        reorderPoint: Number(formData.reorderPoint),
+        expirationDate: formData.expirationDate ? new Date(formData.expirationDate) : undefined,
+        userId: user.uid
+      });
+      
+      toast.success('Item updated successfully');
+      onClose();
+    } catch (error) {
+      console.error('Error updating item:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update item');
+    }
   };
 
   return (

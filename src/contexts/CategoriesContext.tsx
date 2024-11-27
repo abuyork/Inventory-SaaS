@@ -11,7 +11,9 @@ import {
   addDoc,
   updateDoc,
   getDocs,
-  Timestamp
+  Timestamp,
+  getDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from './AuthContext';
@@ -155,39 +157,32 @@ export function CategoriesProvider({ children }: { children: React.ReactNode }) 
 
     try {
       const categoryRef = doc(db, 'categories', id);
-      await runTransaction(db, async (transaction) => {
-        const categoryDoc = await transaction.get(categoryRef);
-        
-        if (!categoryDoc.exists()) {
-          throw new Error('Category not found');
-        }
+      
+      // First check if category exists and get its data
+      const categoryDoc = await getDoc(categoryRef);
+      if (!categoryDoc.exists()) {
+        throw new Error('Category not found');
+      }
 
-        const categoryData = categoryDoc.data() as Category;
-        if (categoryData.userId !== user.uid) {
-          throw new Error('Unauthorized to delete this category');
-        }
+      const categoryData = categoryDoc.data() as Category;
+      if (categoryData.isDefault) {
+        throw new Error('Cannot delete default category');
+      }
 
-        if (categoryData.isDefault) {
-          throw new Error('Cannot delete default category');
-        }
+      // Check for associated products
+      const productsQuery = query(
+        collection(db, 'products'),
+        where('categoryId', '==', id),
+        where('userId', '==', user.uid)
+      );
+      const productsSnapshot = await getDocs(productsQuery);
 
-        // Check if category has products
-        const productsQuery = query(
-          collection(db, 'products'),
-          where('categoryId', '==', id),
-          where('userId', '==', user.uid)
-        );
-        const productsSnapshot = await transaction.get(productsQuery);
+      if (!productsSnapshot.empty) {
+        throw new Error('Cannot delete category with associated products');
+      }
 
-        if (!productsSnapshot.empty) {
-          throw new Error('Cannot delete category with associated products');
-        }
-
-        transaction.update(categoryRef, {
-          isActive: false,
-          updatedAt: serverTimestamp()
-        });
-      });
+      // Actually delete the document instead of soft delete
+      await deleteDoc(categoryRef);
 
       toast.success('Category deleted successfully');
     } catch (err) {
