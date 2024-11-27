@@ -47,3 +47,74 @@
     @apply btn-secondary text-gray-600 hover:bg-gray-50;
   }
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+.error-banner {
+  @apply fixed top-0 left-0 right-0 z-50;
+  animation: slideDown 0.3s ease-out;
+}
+
+.error-banner.hiding {
+  animation: slideUp 0.3s ease-out;
+}
+
+.error-content {
+  @apply max-w-2xl mx-auto bg-white shadow-lg rounded-lg mt-4 flex items-start gap-3 p-4 border-l-4 border-red-500;
+}
+
+.error-icon {
+  @apply w-5 h-5 text-red-500 flex-shrink-0 mt-0.5;
+}
+
+.error-text {
+  @apply flex-1;
+}
+
+.error-title {
+  @apply text-sm font-semibold text-gray-900;
+}
+
+.error-message {
+  @apply text-sm text-gray-600 mt-0.5;
+}
+
+.error-close-btn {
+  @apply p-1 text-gray-400 hover:text-gray-600 rounded-full 
+         hover:bg-gray-100 transition-colors duration-200 flex-shrink-0;
+}

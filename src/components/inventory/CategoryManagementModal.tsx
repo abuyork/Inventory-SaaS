@@ -15,7 +15,10 @@ interface Props {
 interface ValidationErrors {
   name?: string;
   color?: string;
-  general?: string;
+  general?: {
+    title: string;
+    message: string;
+  };
 }
 
 export default function CategoryManagementModal({ onClose }: Props) {
@@ -88,9 +91,11 @@ export default function CategoryManagementModal({ onClose }: Props) {
     } catch (error) {
       console.error('Error adding category:', error);
       setValidationErrors({ 
-        general: error instanceof Error ? error.message : 'Failed to add category' 
+        general: {
+          title: 'Failed to Add Category',
+          message: error instanceof Error ? error.message : 'An unexpected error occurred'
+        }
       });
-      toast.error(error instanceof Error ? error.message : 'Failed to add category');
     } finally {
       setIsSubmitting(false);
     }
@@ -117,13 +122,25 @@ export default function CategoryManagementModal({ onClose }: Props) {
     } catch (error) {
       console.error('Error updating category:', error);
       setValidationErrors({ 
-        general: error instanceof Error ? error.message : 'Failed to update category' 
+        general: {
+          title: 'Failed to Update Category',
+          message: error instanceof Error ? error.message : 'An unexpected error occurred'
+        }
       });
-      toast.error(error instanceof Error ? error.message : 'Failed to update category');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Add useEffect for auto-dismissing error messages
+  React.useEffect(() => {
+    if (validationErrors.general) {
+      const timer = setTimeout(() => {
+        setValidationErrors({});
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [validationErrors.general]);
 
   // Handle category deletion
   const handleDeleteCategory = async (category: Category) => {
@@ -146,14 +163,26 @@ export default function CategoryManagementModal({ onClose }: Props) {
       const productsSnapshot = await getDocs(productsQuery);
 
       if (!productsSnapshot.empty) {
-        toast.error('Cannot delete category with associated products');
+        setValidationErrors({
+          general: {
+            title: 'Unable to Delete Category',
+            message: `"${category.name}" has ${productsSnapshot.size} associated ${productsSnapshot.size === 1 ? 'product' : 'products'}. Please reassign or delete ${productsSnapshot.size === 1 ? 'it' : 'them'} first.`
+          }
+        });
         return;
       }
 
       await deleteCategory(category.id);
+      setValidationErrors({});
+      toast.success('Category deleted successfully');
     } catch (error) {
       console.error('Error deleting category:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to delete category');
+      setValidationErrors({
+        general: {
+          title: 'Operation Failed',
+          message: error instanceof Error ? error.message : 'Failed to delete category'
+        }
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -179,8 +208,20 @@ export default function CategoryManagementModal({ onClose }: Props) {
       <div className="bg-white rounded-xl w-full max-w-2xl shadow-2xl max-h-[90vh] flex flex-col">
         {/* Show general error if exists */}
         {validationErrors.general && (
-          <div className="px-6 py-3 bg-red-50 border-b border-red-200">
-            <p className="text-sm text-red-600">{validationErrors.general}</p>
+          <div className="error-banner">
+            <div className="error-content">
+              <AlertCircle className="error-icon" />
+              <div className="error-text">
+                <h4 className="error-title">{validationErrors.general.title}</h4>
+                <p className="error-message">{validationErrors.general.message}</p>
+              </div>
+              <button 
+                onClick={() => setValidationErrors({})}
+                className="error-close-btn"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
         
