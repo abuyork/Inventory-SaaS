@@ -153,34 +153,10 @@ export default function CategoryManagementModal({ onClose }: Props) {
 
   // Handle category deletion
   const handleDeleteCategory = async (category: Category) => {
-    if (!user) {
-      toast.error('You must be logged in to delete categories');
-      return;
-    }
-
-    if (isSubmitting || category.isDefault) return;
+    if (!user || isSubmitting || category.isDefault) return;
 
     try {
       setIsSubmitting(true);
-      
-      // Check if category has associated products
-      const productsQuery = query(
-        collection(db, 'products'),
-        where('categoryId', '==', category.id),
-        where('userId', '==', user.uid)
-      );
-      const productsSnapshot = await getDocs(productsQuery);
-
-      if (!productsSnapshot.empty) {
-        setValidationErrors({
-          general: {
-            title: 'Unable to Delete Category',
-            message: `"${category.name}" has ${productsSnapshot.size} associated ${productsSnapshot.size === 1 ? 'product' : 'products'}. Please reassign or delete ${productsSnapshot.size === 1 ? 'it' : 'them'} first.`
-          }
-        });
-        return;
-      }
-
       await deleteCategory(category.id);
       setValidationErrors({});
       toast.success('Category deleted successfully');
@@ -198,12 +174,48 @@ export default function CategoryManagementModal({ onClose }: Props) {
     }
   };
 
-  // Add this function to initiate delete confirmation
-  const initiateDelete = (category: Category) => {
-    setDeleteConfirmation({
-      isOpen: true,
-      category
-    });
+  // Update the initiateDelete function
+  const initiateDelete = async (category: Category) => {
+    if (!user) {
+      toast.error('You must be logged in to delete categories');
+      return;
+    }
+
+    if (isSubmitting || category.isDefault) return;
+
+    try {
+      // Check if category has associated products first
+      const productsQuery = query(
+        collection(db, 'products'),
+        where('categoryId', '==', category.id),
+        where('userId', '==', user.uid)
+      );
+      const productsSnapshot = await getDocs(productsQuery);
+
+      if (!productsSnapshot.empty) {
+        setValidationErrors({
+          general: {
+            title: 'Unable to Delete Category',
+            message: `"${category.name}" has ${productsSnapshot.size} associated ${productsSnapshot.size === 1 ? 'product' : 'products'}. Please reassign or delete ${productsSnapshot.size === 1 ? 'it' : 'them'} first.`
+          }
+        });
+        return;
+      }
+
+      // If no associated products, show confirmation dialog
+      setDeleteConfirmation({
+        isOpen: true,
+        category
+      });
+    } catch (error) {
+      console.error('Error checking category products:', error);
+      setValidationErrors({
+        general: {
+          title: 'Operation Failed',
+          message: 'Failed to check category products'
+        }
+      });
+    }
   };
 
   // Handle drag and drop reordering
