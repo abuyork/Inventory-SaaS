@@ -21,6 +21,11 @@ interface ValidationErrors {
   };
 }
 
+interface DeleteConfirmation {
+  isOpen: boolean;
+  category: Category | null;
+}
+
 export default function CategoryManagementModal({ onClose }: Props) {
   const { 
     categories: allCategories, 
@@ -42,6 +47,10 @@ export default function CategoryManagementModal({ onClose }: Props) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedColor, setSelectedColor] = useState(CATEGORY_CONSTANTS.DEFAULT_COLORS[0]);
   const { user } = useAuth();
+  const [deleteConfirmation, setDeleteConfirmation] = useState<DeleteConfirmation>({
+    isOpen: false,
+    category: null
+  });
 
   // Filter categories based on search term
   const filteredCategories = categories.filter(category => 
@@ -175,6 +184,7 @@ export default function CategoryManagementModal({ onClose }: Props) {
       await deleteCategory(category.id);
       setValidationErrors({});
       toast.success('Category deleted successfully');
+      setDeleteConfirmation({ isOpen: false, category: null });
     } catch (error) {
       console.error('Error deleting category:', error);
       setValidationErrors({
@@ -186,6 +196,14 @@ export default function CategoryManagementModal({ onClose }: Props) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Add this function to initiate delete confirmation
+  const initiateDelete = (category: Category) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      category
+    });
   };
 
   // Handle drag and drop reordering
@@ -426,7 +444,7 @@ export default function CategoryManagementModal({ onClose }: Props) {
                                     <Edit className="w-4 h-4" />
                                   </button>
                                   <button
-                                    onClick={() => handleDeleteCategory(category)}
+                                    onClick={() => initiateDelete(category)}
                                     disabled={isSubmitting || category.isDefault}
                                     className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-150"
                                     title="Delete category"
@@ -447,6 +465,35 @@ export default function CategoryManagementModal({ onClose }: Props) {
             </Droppable>
           </DragDropContext>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        {deleteConfirmation.isOpen && deleteConfirmation.category && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Delete Category?
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Are you sure you want to delete "{deleteConfirmation.category.name}"? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setDeleteConfirmation({ isOpen: false, category: null })}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteCategory(deleteConfirmation.category!)}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
