@@ -50,7 +50,7 @@ export default function InventoryItem({ product, onDelete, onEdit, selected, onS
     };
   };
 
-  const { name: categoryName, color: categoryColor } = getCategoryDetails(product.categoryId);
+  const { name: categoryName, color: categoryColor } = getCategoryDetails(product.category || product.categoryId);
 
   const handleDelete = () => {
     setShowConfirmDelete(true);

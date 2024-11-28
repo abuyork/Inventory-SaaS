@@ -4,8 +4,6 @@ import { useInventory } from '../../hooks/useInventory';
 import InventoryItem from './InventoryItem';
 import AddInventoryModal from './AddInventoryModal';
 import BulkActionsBar from './BulkActionsBar';
-import { Product } from '../../types';
-import { format } from 'date-fns';
 import { Checkbox } from '../ui/Checkbox';
 import toast from 'react-hot-toast';
 import CategoryManagementModal from './CategoryManagementModal';
@@ -298,23 +296,4 @@ export default function InventoryList() {
   );
 }
 
-function convertToCSV(products: Product[]): string {
-  const headers = ['Name', 'Category', 'Quantity', 'Unit', 'Reorder Point', 'Last Updated'];
-  const rows = products.map(p => [
-    p.name,
-    p.categoryId,
-    p.quantity,
-    p.unit,
-    p.reorderPoint,
-    format(p.lastUpdated, 'yyyy-MM-dd')
-  ]);
-  return [headers, ...rows].map(row => row.join(',')).join('\n');
-}
 
-function downloadCSV(csv: string, filename: string) {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.click();
-}

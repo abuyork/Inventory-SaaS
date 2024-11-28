@@ -6,23 +6,21 @@ export interface Product {
   category: string;
   quantity: number;
   reorderPoint: number;
-  status: string;
   lastUpdated: Date;
   userId: string;
-  archived: boolean;
+  unit: string;
+  archived?: boolean;
+  categoryId: string;
+  expirationDate?: Date;
 }
 
 export interface Category {
   id: string;
   name: string;
   color: string;
-  isDefault: boolean;
-  isActive: boolean;
-  createdAt: Date | Timestamp;
-  updatedAt: Date | Timestamp;
   userId: string;
-  sortOrder?: number;
-  description?: string;
+  isDefault?: boolean;
+  isActive?: boolean;
   productCount?: number;
 }
 

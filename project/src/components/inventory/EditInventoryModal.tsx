@@ -6,11 +6,21 @@ import { useCategories } from '../../contexts/CategoriesContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import debounce from 'lodash/debounce';
+import type { DebouncedFunc } from 'lodash';
 
 interface Props {
   product: Product;
   onClose: () => void;
   onEdit: (id: string, product: Partial<Product>) => void;
+}
+
+interface FormData {
+  name: string;
+  categoryId: string;
+  quantity: string;
+  unit: string;
+  reorderPoint: string;
+  expirationDate: string;
 }
 
 export default function EditInventoryModal({ product, onClose, onEdit }: Props) {
@@ -19,7 +29,7 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
 
   const categories = allCategories.filter(category => category.isActive !== false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: product.name,
     categoryId: product.categoryId,
     quantity: product.quantity.toString(),
@@ -33,7 +43,7 @@ export default function EditInventoryModal({ product, onClose, onEdit }: Props) 
     [categories]
   );
 
-  const debouncedUpdate = useCallback(
+  const debouncedUpdate: DebouncedFunc<(updates: Partial<Product>) => void> = useCallback(
     debounce((updates: Partial<Product>) => {
       onEdit(product.id, updates);
     }, 500),

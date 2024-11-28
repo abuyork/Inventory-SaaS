@@ -11,13 +11,22 @@ interface Props {
   onAdd: (product: Omit<Product, 'id' | 'lastUpdated'>) => void;
 }
 
+interface FormData {
+  name: string;
+  categoryId: string;
+  quantity: string;
+  unit: string;
+  reorderPoint: string;
+  expirationDate: string;
+}
+
 export default function AddInventoryModal({ onClose, onAdd }: Props) {
   const { categories: allCategories } = useCategories();
   const { user } = useAuth();
 
   const categories = allCategories.filter(category => category.isActive !== false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     categoryId: '',
     quantity: '',
@@ -34,27 +43,17 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
       return;
     }
 
-    if (!formData.name.trim()) {
-      toast.error('Item name is required');
-      return;
-    }
+    const quantity = Number(formData.quantity);
+    const reorderPoint = Number(formData.reorderPoint);
 
-    if (formData.quantity < 0) {
+    if (quantity < 0) {
       toast.error('Quantity cannot be negative');
       return;
     }
 
-    if (formData.reorderPoint < 0) {
+    if (reorderPoint < 0) {
       toast.error('Reorder point cannot be negative');
       return;
-    }
-
-    if (formData.expirationDate) {
-      const expirationDate = new Date(formData.expirationDate);
-      if (expirationDate < new Date()) {
-        toast.error('Expiration date cannot be in the past');
-        return;
-      }
     }
 
     try {
@@ -70,12 +69,15 @@ export default function AddInventoryModal({ onClose, onAdd }: Props) {
       }
 
       await onAdd({
-        ...formData,
-        quantity: Number(formData.quantity),
-        reorderPoint: Number(formData.reorderPoint),
+        name: formData.name,
+        categoryId: formData.categoryId,
+        quantity: quantity,
+        unit: formData.unit,
+        reorderPoint: reorderPoint,
         expirationDate: formData.expirationDate ? new Date(formData.expirationDate) : undefined,
         userId: user.uid,
-        archived: false
+        archived: false,
+        category: selectedCategory.id
       });
 
       toast.success('Item added successfully');
